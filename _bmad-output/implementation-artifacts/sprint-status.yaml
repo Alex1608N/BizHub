@@ -1,8 +1,8 @@
-# generated: 2026-03-06
+# generated: 2026-03-11
 # project: practica
-# project_key: PRAC
-# tracking_system: local
-# story_location: _bmad-output/implementation-artifacts/stories
+# project_key: NOKEY
+# tracking_system: file-system
+# story_location: _bmad-output/implementation-artifacts
 
 # STATUS DEFINITIONS:
 # ==================
@@ -11,26 +11,30 @@
 #   - in-progress: Epic actively being worked on
 #   - done: All stories in epic completed
 #
+# Epic Status Transitions:
+#   - backlog → in-progress: Automatically when first story is created (via create-story)
+#   - in-progress → done: Manually when all stories reach 'done' status
+#
 # Story Status:
 #   - backlog: Story only exists in epic file
 #   - ready-for-dev: Story file created in stories folder
 #   - in-progress: Developer actively working on implementation
-#   - review: Ready for code review
+#   - review: Ready for code review (via Dev's code-review workflow)
 #   - done: Story completed
 #
 # Retrospective Status:
 #   - optional: Can be completed but not required
 #   - done: Retrospective has been completed
 
-generated: 2026-03-06
+generated: 2026-03-11
 project: practica
-project_key: PRAC
-tracking_system: local
-story_location: _bmad-output/implementation-artifacts/stories
+project_key: NOKEY
+tracking_system: file-system
+story_location: _bmad-output/implementation-artifacts
 
 development_status:
-  epic-1: backlog
-  1-1-initializarea-proiectului-nextjs-local: ready-for-dev
+  epic-1: in-progress
+  1-1-initializarea-proiectului-nextjs-local: in-progress
   1-2-definirea-schemei-de-date-si-crearea-automata-a-db: backlog
   1-3-autentificare-locala-cu-parole-hashed: backlog
   1-4-script-de-seed-pentru-admin-si-date-de-baza: backlog
@@ -57,7 +61,7 @@ development_status:
   epic-4-retrospective: optional
 
   epic-5: backlog
-  5-1-daily-audit-digest-ieri-in-firma: backlog
+  5-1-daily-audit-digest-ieri-in-firme: backlog
   5-2-alerte-stoc-critic: backlog
   5-3-timeline-activitate-feed: backlog
   epic-5-retrospective: optional

@@ -1,43 +1,12 @@
-# Dependencies
-/node_modules
-/.pnp
-.pnp.js
-.yarn/install-state.gz
-
-# Next.js Build Output
-/.next/
-/out/
-
-# Production
-/build
-
-# Debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# Local SQLite Database (Critical for Local-Only Apps)
-# We ignore the actual DB file to prevent data conflicts in git
-*.db
-*.db-journal
-*.db-shm
-*.db-wal
-
-# Environments
+node_modules/
 .env
 .env.local
-.env.development.local
-.env.test.local
-.env.production.local
-
-# Vercel
-.vercel
-
-# TypeScript
-*.tsbuildinfo
-next-env.d.ts
-
-# OS Metadata
+.env*.local
+.next/
+dist/
+__pycache__/
+*.pyc
+.venv/
 .DS_Store
-Thumbs.db
+practica.db
+drizzle/
