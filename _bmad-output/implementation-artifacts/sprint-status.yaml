@@ -1,0 +1,63 @@
+# generated: 2026-03-06
+# project: practica
+# project_key: PRAC
+# tracking_system: local
+# story_location: _bmad-output/implementation-artifacts/stories
+
+# STATUS DEFINITIONS:
+# ==================
+# Epic Status:
+#   - backlog: Epic not yet started
+#   - in-progress: Epic actively being worked on
+#   - done: All stories in epic completed
+#
+# Story Status:
+#   - backlog: Story only exists in epic file
+#   - ready-for-dev: Story file created in stories folder
+#   - in-progress: Developer actively working on implementation
+#   - review: Ready for code review
+#   - done: Story completed
+#
+# Retrospective Status:
+#   - optional: Can be completed but not required
+#   - done: Retrospective has been completed
+
+generated: 2026-03-06
+project: practica
+project_key: PRAC
+tracking_system: local
+story_location: _bmad-output/implementation-artifacts/stories
+
+development_status:
+  epic-1: backlog
+  1-1-initializarea-proiectului-nextjs-local: ready-for-dev
+  1-2-definirea-schemei-de-date-si-crearea-automata-a-db: backlog
+  1-3-autentificare-locala-cu-parole-hashed: backlog
+  1-4-script-de-seed-pentru-admin-si-date-de-baza: backlog
+  epic-1-retrospective: optional
+
+  epic-2: backlog
+  2-1-managementul-catalogului-crud: backlog
+  2-2-inregistrarea-miscarilor-de-stoc: backlog
+  2-3-adaugarea-categoriilor-on-the-fly: backlog
+  2-4-import-csv-local: backlog
+  epic-2-retrospective: optional
+
+  epic-3: backlog
+  3-1-logarea-automata-audit-engine: backlog
+  3-2-editare-pe-roluri-7-zile-vs-nelimitat: backlog
+  3-3-vizualizare-timeline-comparativ: backlog
+  epic-3-retrospective: optional
+
+  epic-4: backlog
+  4-0-setari-firma-logo-date-fiscale: backlog
+  4-1-generare-pdf-facturi-avize: backlog
+  4-2-export-excel-xlsx-pentru-contabil: backlog
+  4-3-raport-valoric-de-stoc: backlog
+  epic-4-retrospective: optional
+
+  epic-5: backlog
+  5-1-daily-audit-digest-ieri-in-firma: backlog
+  5-2-alerte-stoc-critic: backlog
+  5-3-timeline-activitate-feed: backlog
+  epic-5-retrospective: optional
