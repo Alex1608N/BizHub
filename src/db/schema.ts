@@ -1,4 +1,5 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { relations } from 'drizzle-orm';
 
 export const utilizatori = sqliteTable('utilizatori', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -7,6 +8,10 @@ export const utilizatori = sqliteTable('utilizatori', {
   parola_hash: text('parola_hash').notNull(),
   rol: text('rol', { enum: ['ADMIN', 'MANAGER', 'ANGAJAT', 'CONTABIL'] }).notNull().default('ANGAJAT'),
 });
+
+export const utilizatoriRelations = relations(utilizatori, ({ many }) => ({
+  sesiuni: many(sesiuni),
+}));
 
 export const companii = sqliteTable('companii', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -33,3 +38,10 @@ export const sesiuni = sqliteTable('sesiuni', {
   user_id: integer('user_id').notNull().references(() => utilizatori.id),
   data_expirare: integer('data_expirare', { mode: 'timestamp' }).notNull(),
 });
+
+export const sesiuniRelations = relations(sesiuni, ({ one }) => ({
+  user: one(utilizatori, {
+    fields: [sesiuni.user_id],
+    references: [utilizatori.id],
+  }),
+}));

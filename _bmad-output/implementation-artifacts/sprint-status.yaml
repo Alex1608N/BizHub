@@ -34,7 +34,7 @@ story_location: _bmad-output/implementation-artifacts
 
 development_status:
   epic-1: in-progress
-  1-1-initializarea-proiectului-nextjs-local: in-progress
+  1-1-initializarea-proiectului-nextjs-local: done
   1-2-definirea-schemei-de-date-si-crearea-automata-a-db: backlog
   1-3-autentificare-locala-cu-parole-hashed: backlog
   1-4-script-de-seed-pentru-admin-si-date-de-baza: backlog

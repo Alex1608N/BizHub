@@ -2,7 +2,7 @@
 id: "1-1-initializarea-proiectului-nextjs-local"
 title: "Inițializarea Proiectului Next.js Local"
 epic: "Epic 1: Fundația Locală & Schema de Date"
-status: "ready-for-dev"
+status: "done"
 author: "BMad Master"
 date: "2026-03-06"
 ---
@@ -20,11 +20,11 @@ Ca un Dezvoltator, vreau să inițializez un proiect curat Next.js 15 cu Tailwin
 - **Configurare:** Fișier local `practica.db` în rădăcina proiectului.
 
 ## Criterii de Acceptare
-1. [ ] Proiectul Next.js 15 este creat și rulează local.
-2. [ ] Tailwind CSS este funcțional și configurat corect.
-3. [ ] Drizzle ORM este instalat și conectat la `practica.db`.
-4. [ ] Există un fișier de configurare `drizzle.config.ts`.
-5. [ ] Comanda `npm run dev` pornește aplicația fără erori.
+1. [x] Proiectul Next.js 15 este creat și rulează local.
+2. [x] Tailwind CSS este funcțional și configurat corect.
+3. [x] Drizzle ORM este instalat și conectat la `practica.db`.
+4. [x] Există un fișier de configurare `drizzle.config.ts`.
+5. [x] Comanda `npm run dev` pornește aplicația fără erori.
 
 ## Instrucțiuni pentru Dev Agent
 1. Rulează `npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias "@/*" --yes`.
