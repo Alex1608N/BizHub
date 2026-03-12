@@ -2,7 +2,7 @@
 id: "1-2-definirea-schemei-de-date-si-crearea-automata-a-db"
 title: "Definirea Schemei de Date și Crearea Automată a DB"
 epic: "Epic 1: Fundația Locală & Schema de Date"
-status: "ready-for-dev"
+status: "completed"
 author: "BMad Master"
 date: "2026-03-11"
 ---
@@ -19,10 +19,10 @@ Ca un Administrator de Sistem, vreau ca aplicația să creeze și să migreze au
 - **Migrări:** Generare automată a migrărilor prin `drizzle-kit generate` și execuție prin `drizzle-kit push` sau script de migrare.
 
 ## Criterii de Acceptare
-1. [ ] Definițiile de schemă Drizzle pentru toate tabelele core sunt prezente în `src/db/schema.ts`.
-2. [ ] Fișierul `practica.db` este creat automat la pornire dacă nu există.
-3. [ ] Toate tabelele sunt create prin migrare automată la prima rulare a aplicației sau a unui script de setup.
-4. [ ] Conexiunea la DB este testată și funcțională.
+1. [x] Definițiile de schemă Drizzle pentru toate tabelele core sunt prezente în `src/db/schema.ts`.
+2. [x] Fișierul `practica.db` este creat automat la pornire dacă nu există.
+3. [x] Toate tabelele sunt create prin migrare automată la prima rulare a aplicației sau a unui script de setup.
+4. [x] Conexiunea la DB este testată și funcțională.
 
 ## Instrucțiuni pentru Dev Agent
 1. Creează `src/db/schema.ts` cu tabelele: `utilizatori` (id, nume, parola_hash, rol), `companii`, `categorii`, `unitati`, `sesiuni`.
