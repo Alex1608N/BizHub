@@ -9,4 +9,11 @@ __pycache__/
 .venv/
 .DS_Store
 practica.db
+
+# BMAD Boilerplate (Excluse din Git tracking)
+.agent/
+.clinerules/
+.gemini/
+_bmad/
+
 # drizzle/ (eliminat pentru a permite sincronizarea migrărilor)
