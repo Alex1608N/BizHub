@@ -1,50 +1,28 @@
-# generated: 2026-03-11
+# generated: 2026-03-13 (Actualizat de BMad Master)
 # project: practica
-# project_key: NOKEY
-# tracking_system: file-system
+# project_key: BH
+# tracking_system: jira
 # story_location: _bmad-output/implementation-artifacts
 
-# STATUS DEFINITIONS:
-# ==================
-# Epic Status:
-#   - backlog: Epic not yet started
-#   - in-progress: Epic actively being worked on
-#   - done: All stories in epic completed
-#
-# Epic Status Transitions:
-#   - backlog → in-progress: Automatically when first story is created (via create-story)
-#   - in-progress → done: Manually when all stories reach 'done' status
-#
-# Story Status:
-#   - backlog: Story only exists in epic file
-#   - ready-for-dev: Story file created in stories folder
-#   - in-progress: Developer actively working on implementation
-#   - review: Ready for code review (via Dev's code-review workflow)
-#   - done: Story completed
-#
-# Retrospective Status:
-#   - optional: Can be completed but not required
-#   - done: Retrospective has been completed
-
-generated: 2026-03-11
+generated: 2026-03-13
 project: practica
-project_key: NOKEY
-tracking_system: file-system
+project_key: BH
+tracking_system: jira
 story_location: _bmad-output/implementation-artifacts
 
 development_status:
-  epic-1: in-progress
+  epic-1: done
   1-1-initializarea-proiectului-nextjs-local: done
-  1-2-definirea-schemei-de-date-si-crearea-automata-a-db: backlog
-  1-3-autentificare-locala-cu-parole-hashed: backlog
-  1-4-script-de-seed-pentru-admin-si-date-de-baza: backlog
-  epic-1-retrospective: optional
+  1-2-definirea-schemei-de-date-si-crearea-automata-a-db: done
+  1-3-autentificare-locala-cu-parole-hashed: done
+  1-4-script-de-seed-pentru-admin-si-date-de-baza: done
+  epic-1-retrospective: done
 
-  epic-2: backlog
-  2-1-managementul-catalogului-crud: backlog
+  epic-2: in-progress
+  2-1-managementul-catalogului-crud: ready-for-dev
   2-2-inregistrarea-miscarilor-de-stoc: backlog
   2-3-adaugarea-categoriilor-on-the-fly: backlog
-  2-4-import-csv-local: backlog
+  2-4-import-rapid-catalog-csv-excel: backlog
   epic-2-retrospective: optional
 
   epic-3: backlog
