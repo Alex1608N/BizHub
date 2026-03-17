@@ -68,3 +68,34 @@ export async function deleteProduct(id: number) {
     return { success: false, error: 'Failed to delete product' };
   }
 }
+
+export async function recordStockMovement(id: number, quantityChange: number) {
+  try {
+    // 1. Preluăm produsul curent pentru a verifica stocul
+    const product = await db.query.produse.findFirst({
+      where: eq(produse.id, id),
+    });
+
+    if (!product) {
+      return { success: false, error: 'Produsul nu a fost găsit' };
+    }
+
+    const newStock = product.stoc + quantityChange;
+
+    // 2. Validare: stocul nu poate fi negativ
+    if (newStock < 0) {
+      return { success: false, error: 'Stoc insuficient' };
+    }
+
+    // 3. Actualizare stoc
+    await db.update(produse)
+      .set({ stoc: newStock })
+      .where(eq(produse.id, id));
+
+    revalidatePath('/catalog');
+    return { success: true };
+  } catch (error) {
+    console.error('Error recording stock movement:', error);
+    return { success: false, error: 'Eroare la actualizarea stocului' };
+  }
+}

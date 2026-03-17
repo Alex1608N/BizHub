@@ -20,8 +20,8 @@ development_status:
 
   epic-2: in-progress
   2-1-managementul-catalogului-crud: done
-  2-2-inregistrarea-miscarilor-de-stoc: ready-for-dev
-  2-3-adaugarea-categoriilor-on-the-fly: backlog
+  2-2-inregistrarea-miscarilor-de-stoc: done
+  2-3-adaugarea-categoriilor-on-the-fly: ready-for-dev
   2-4-import-rapid-catalog-csv-excel: backlog
   epic-2-retrospective: optional
 

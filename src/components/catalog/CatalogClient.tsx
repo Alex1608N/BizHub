@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import ProductForm from './ProductForm';
-import { deleteProduct } from '@/app/actions/products';
+import { deleteProduct, recordStockMovement } from '@/app/actions/products';
 
 interface CatalogClientProps {
   initialProducts: any[];
@@ -13,6 +13,13 @@ interface CatalogClientProps {
 export default function CatalogClient({ initialProducts, categories, units }: CatalogClientProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+
+  const handleStockChange = async (id: number, change: number) => {
+    const result = await recordStockMovement(id, change);
+    if (!result.success) {
+      alert(result.error);
+    }
+  };
 
   const handleDelete = async (id: number) => {
     if (confirm('Ești sigur că vrei să ștergi acest produs?')) {
@@ -92,7 +99,25 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
                   <td className="px-6 py-4 whitespace-nowrap text-gray-600">
                     {product.categorie?.nume || '-'}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">{product.stoc}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div className="flex items-center space-x-2">
+                      <button
+                        onClick={() => handleStockChange(product.id, -1)}
+                        className="w-6 h-6 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition-colors"
+                        title="Scade stoc"
+                      >
+                        -
+                      </button>
+                      <span className="font-medium text-gray-900 min-w-[20px] text-center">{product.stoc}</span>
+                      <button
+                        onClick={() => handleStockChange(product.id, 1)}
+                        className="w-6 h-6 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition-colors"
+                        title="Adaugă stoc"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-600">
                     {(product.pret / 100).toFixed(2)} RON
                   </td>
