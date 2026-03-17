@@ -22,6 +22,68 @@ export async function getUnits() {
   return await db.select().from(unitati);
 }
 
+export async function createCategory(data: { nume: string; descriere?: string }) {
+  try {
+    const [newCategory] = await db.insert(categorii).values(data).returning();
+    revalidatePath('/catalog');
+    return { success: true, category: newCategory };
+  } catch (error) {
+    console.error('Error creating category:', error);
+    return { success: false, error: 'Categoria există deja sau a apărut o eroare' };
+  }
+}
+
+export async function importProducts(data: any[]) {
+  try {
+    let importedCount = 0;
+    
+    for (const item of data) {
+      if (!item.nume) continue;
+
+      // 1. Gestionare categorie (Caută sau Creează)
+      let catId: number | undefined;
+      if (item.categorie) {
+        const existingCat = await db.query.categorii.findFirst({
+          where: eq(categorii.nume, item.categorie),
+        });
+        if (existingCat) {
+          catId = existingCat.id;
+        } else {
+          const [newCat] = await db.insert(categorii).values({ nume: item.categorie }).returning();
+          catId = newCat.id;
+        }
+      }
+
+      // 2. Gestionare unitate (Caută)
+      let unitId: number | undefined;
+      if (item.unitate) {
+        const existingUnit = await db.query.unitati.findFirst({
+          where: eq(unitati.simbol, item.unitate),
+        });
+        if (existingUnit) unitId = existingUnit.id;
+      }
+
+      // 3. Inserare produs
+      await db.insert(produse).values({
+        nume: item.nume,
+        descriere: item.descriere || '',
+        pret: Math.round(parseFloat(item.pret.toString().replace(',', '.')) * 100) || 0,
+        stoc: parseInt(item.stoc?.toString()) || 0,
+        categorie_id: catId,
+        unitate_id: unitId,
+      }).onConflictDoNothing(); // Prevenim duplicatele pe baza numelui daca am avea index unic
+
+      importedCount++;
+    }
+
+    revalidatePath('/catalog');
+    return { success: true, count: importedCount };
+  } catch (error) {
+    console.error('Error importing products:', error);
+    return { success: false, error: 'Eroare la importul masiv' };
+  }
+}
+
 export async function addProduct(data: {
   nume: string;
   descriere?: string;

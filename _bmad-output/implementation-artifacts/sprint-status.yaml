@@ -18,15 +18,15 @@ development_status:
   1-4-script-de-seed-pentru-admin-si-date-de-baza: done
   epic-1-retrospective: done
 
-  epic-2: in-progress
+  epic-2: done
   2-1-managementul-catalogului-crud: done
   2-2-inregistrarea-miscarilor-de-stoc: done
-  2-3-adaugarea-categoriilor-on-the-fly: ready-for-dev
-  2-4-import-rapid-catalog-csv-excel: backlog
+  2-3-adaugarea-categoriilor-on-the-fly: done
+  2-4-import-rapid-catalog-csv-excel: done
   epic-2-retrospective: optional
 
-  epic-3: backlog
-  3-1-logarea-automata-audit-engine: backlog
+  epic-3: in-progress
+  3-1-logarea-automata-audit-engine: ready-for-dev
   3-2-editare-pe-roluri-7-zile-vs-nelimitat: backlog
   3-3-vizualizare-timeline-comparativ: backlog
   epic-3-retrospective: optional

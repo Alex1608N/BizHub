@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import ProductForm from './ProductForm';
-import { deleteProduct, recordStockMovement } from '@/app/actions/products';
+import { deleteProduct, recordStockMovement, importProducts } from '@/app/actions/products';
+import Papa from 'papaparse';
 
 interface CatalogClientProps {
   initialProducts: any[];
@@ -13,6 +14,26 @@ interface CatalogClientProps {
 export default function CatalogClient({ initialProducts, categories, units }: CatalogClientProps) {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async (results) => {
+        const result = await importProducts(results.data);
+        if (result.success) {
+          alert(`Import reușit: ${result.count} produse adăugate.`);
+        } else {
+          alert(result.error);
+        }
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      },
+    });
+  };
 
   const handleStockChange = async (id: number, change: number) => {
     const result = await recordStockMovement(id, change);
@@ -42,14 +63,31 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
     <div className="p-6">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Catalog Produse</h1>
-        {!isFormOpen && (
-          <button
-            onClick={handleAdd}
-            className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
-          >
-            + Adaugă Produs
-          </button>
-        )}
+        <div className="flex space-x-3">
+          {!isFormOpen && (
+            <>
+              <input
+                type="file"
+                accept=".csv"
+                ref={fileInputRef}
+                onChange={handleImportCSV}
+                className="hidden"
+              />
+              <button
+                onClick={() => fileInputRef.current?.click()}
+                className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md transition-colors border"
+              >
+                Import CSV
+              </button>
+              <button
+                onClick={handleAdd}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+              >
+                + Adaugă Produs
+              </button>
+            </>
+          )}
+        </div>
       </div>
 
       {isFormOpen && (
