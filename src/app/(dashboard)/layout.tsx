@@ -11,12 +11,14 @@ import {
   Menu, 
   X,
   Store,
-  Users
+  Users,
+  History
 } from "lucide-react";
 
 const menuItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Catalog Produse", href: "/catalog", icon: Package },
+  { name: "Timeline Audit", href: "/audit", icon: History },
   { name: "Unitati Biz", href: "/unitati", icon: Store },
   { name: "Utilizatori", href: "/utilizatori", icon: Users },
   { name: "Setari", href: "/settings", icon: Settings },

@@ -25,11 +25,11 @@ development_status:
   2-4-import-rapid-catalog-csv-excel: done
   epic-2-retrospective: optional
 
-  epic-3: in-progress
+  epic-3: done
   3-1-logarea-automata-audit-engine: done
-  3-2-editare-pe-roluri-7-zile-vs-nelimitat: ready-for-dev
-  3-3-vizualizare-timeline-comparativ: backlog
-  epic-3-retrospective: optional
+  3-2-editare-pe-roluri-7-zile-vs-nelimitat: done
+  3-3-vizualizare-timeline-comparativ: done
+  epic-3-retrospective: done
 
   epic-4: backlog
   4-0-setari-firma-logo-date-fiscale: backlog
