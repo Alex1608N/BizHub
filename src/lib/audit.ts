@@ -1,5 +1,6 @@
 import { auditLogs } from '@/db/schema';
-import { type SQLiteTransaction } from 'drizzle-orm/sqlite-core';
+import { eq, and, sql } from 'drizzle-orm';
+import { db } from '@/db/db';
 
 interface AuditData {
   user_id: number | null;
@@ -11,7 +12,6 @@ interface AuditData {
 
 /**
  * Loghează o acțiune în tabelul de audit.
- * Trebuie apelat în interiorul unei tranzacții Drizzle pentru a asigura atomicitatea.
  */
 export async function auditLog(
   tx: any,
@@ -28,4 +28,39 @@ export async function auditLog(
   } catch (error) {
     console.error('Eroare la salvarea log-ului de audit:', error);
   }
+}
+
+/**
+ * Verifică dacă un utilizator are dreptul să editeze un produs.
+ * - ADMIN/MANAGER: Mereu TRUE.
+ * - ANGAJAT: Doar în primele 7 zile de la crearea produsului.
+ */
+export async function canUserEditProduct(productId: number, userRole: string) {
+  if (userRole === 'ADMIN' || userRole === 'MANAGER') {
+    return true;
+  }
+
+  // Căutăm log-ul de tip CREATE pentru acest produs
+  // NOTĂ: Deoarece ID-ul este în JSON-ul stocat în date_noi, 
+  // căutăm log-ul care conține ID-ul produsului în formatul corect.
+  const createLog = await db.query.auditLogs.findFirst({
+    where: and(
+      eq(auditLogs.actiune, 'CREATE'),
+      eq(auditLogs.tabel, 'produse'),
+      sql`${auditLogs.date_noi} LIKE ${'%"id":' + productId + ',%'}`
+    ),
+    orderBy: (logs, { asc }) => [asc(logs.id)], // Primul log de creare
+  });
+
+  if (!createLog) {
+    // Dacă nu găsim log-ul de creare (produse vechi de dinaintea auditului), 
+    // presupunem că sunt vechi și blocăm editarea pentru angajați pentru siguranță.
+    return false;
+  }
+
+  const sapteZileInMs = 7 * 24 * 60 * 60 * 1000;
+  const dataCreare = new Date(createLog.timestamp).getTime();
+  const acum = Date.now();
+
+  return (acum - dataCreare) < sapteZileInMs;
 }
