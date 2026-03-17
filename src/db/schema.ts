@@ -74,3 +74,21 @@ export const sesiuniRelations = relations(sesiuni, ({ one }) => ({
     references: [utilizatori.id],
   }),
 }));
+
+export const audit_logs = sqliteTable('audit_logs', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  tabel_afectat: text('tabel_afectat').notNull(),
+  coloana: text('coloana'),
+  valoare_veche: text('valoare_veche'),
+  valoare_noua: text('valoare_noua'),
+  utilizator_id: integer('utilizator_id').references(() => utilizatori.id),
+  data_creare: integer('data_creare', { mode: 'timestamp' }).notNull().default(new Date()),
+  motiv: text('motiv'),
+});
+
+export const auditLogsRelations = relations(audit_logs, ({ one }) => ({
+  user: one(utilizatori, {
+    fields: [audit_logs.utilizator_id],
+    references: [utilizatori.id],
+  }),
+}));

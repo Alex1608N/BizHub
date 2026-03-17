@@ -4,6 +4,8 @@ import { db } from '@/db/db';
 import { produse, categorii, unitati } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
+import { logAudit } from '@/lib/audit';
+import { getSession } from '@/lib/auth';
 
 export async function getProducts() {
   return await db.query.produse.findMany({
@@ -111,7 +113,30 @@ export async function updateProduct(id: number, data: Partial<{
   unitate_id?: number;
 }>) {
   try {
+    const session = await getSession();
+    const oldProduct = await db.query.produse.findFirst({
+      where: eq(produse.id, id),
+    });
+
+    if (!oldProduct) return { success: false, error: 'Product not found' };
+
     await db.update(produse).set(data).where(eq(produse.id, id));
+
+    // Audit changes
+    for (const [key, value] of Object.entries(data)) {
+      const oldValue = oldProduct[key as keyof typeof oldProduct];
+      if (value !== undefined && value !== oldValue) {
+        await logAudit({
+          tabel_afectat: 'produse',
+          coloana: key,
+          valoare_veche: String(oldValue),
+          valoare_noua: String(value),
+          utilizator_id: session?.user?.id,
+          motiv: 'Update produs',
+        });
+      }
+    }
+
     revalidatePath('/catalog');
     return { success: true };
   } catch (error) {
@@ -122,7 +147,23 @@ export async function updateProduct(id: number, data: Partial<{
 
 export async function deleteProduct(id: number) {
   try {
+    const session = await getSession();
+    const product = await db.query.produse.findFirst({
+      where: eq(produse.id, id),
+    });
+
+    if (!product) return { success: false, error: 'Product not found' };
+
     await db.delete(produse).where(eq(produse.id, id));
+
+    await logAudit({
+      tabel_afectat: 'produse',
+      valoare_veche: JSON.stringify(product),
+      valoare_noua: 'DELETED',
+      utilizator_id: session?.user?.id,
+      motiv: `Ștergere produs: ${product.nume}`,
+    });
+
     revalidatePath('/catalog');
     return { success: true };
   } catch (error) {
@@ -133,6 +174,7 @@ export async function deleteProduct(id: number) {
 
 export async function recordStockMovement(id: number, quantityChange: number) {
   try {
+    const session = await getSession();
     // 1. Preluăm produsul curent pentru a verifica stocul
     const product = await db.query.produse.findFirst({
       where: eq(produse.id, id),
@@ -153,6 +195,16 @@ export async function recordStockMovement(id: number, quantityChange: number) {
     await db.update(produse)
       .set({ stoc: newStock })
       .where(eq(produse.id, id));
+
+    // Audit stock movement
+    await logAudit({
+      tabel_afectat: 'produse',
+      coloana: 'stoc',
+      valoare_veche: String(product.stoc),
+      valoare_noua: String(newStock),
+      utilizator_id: session?.user?.id,
+      motiv: `Mișcare stoc: ${quantityChange > 0 ? '+' : ''}${quantityChange}`,
+    });
 
     revalidatePath('/catalog');
     return { success: true };
