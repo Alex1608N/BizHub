@@ -4,6 +4,7 @@ import { useState, useRef } from 'react';
 import ProductForm from './ProductForm';
 import { deleteProduct, recordStockMovement, importProducts } from '@/app/actions/products';
 import Papa from 'papaparse';
+import { Lock } from 'lucide-react';
 
 interface CatalogClientProps {
   initialProducts: any[];
@@ -12,6 +13,7 @@ interface CatalogClientProps {
 }
 
 export default function CatalogClient({ initialProducts, categories, units }: CatalogClientProps) {
+  // ... restul codului rămâne neschimbat până la return ...
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -132,8 +134,13 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
               </tr>
             ) : (
               initialProducts.map((product) => (
-                <tr key={product.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap font-medium">{product.nume}</td>
+                <tr key={product.id} className={`hover:bg-gray-50 transition-colors ${!product.isEditable ? 'bg-gray-50/30' : ''}`}>
+                  <td className="px-6 py-4 whitespace-nowrap font-medium flex items-center">
+                    {product.nume}
+                    {!product.isEditable && (
+                      <Lock size={14} className="ml-2 text-gray-400" title="Editare restricționată (7+ zile)" />
+                    )}
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-600">
                     {product.categorie?.nume || '-'}
                   </td>
@@ -141,16 +148,24 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
                     <div className="flex items-center space-x-2">
                       <button
                         onClick={() => handleStockChange(product.id, -1)}
-                        className="w-6 h-6 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition-colors"
-                        title="Scade stoc"
+                        disabled={!product.isEditable}
+                        className={`w-6 h-6 flex items-center justify-center bg-gray-100 rounded-full text-gray-600 transition-colors ${
+                          !product.isEditable ? 'opacity-30 cursor-not-allowed' : 'hover:bg-gray-200'
+                        }`}
+                        title={!product.isEditable ? "Fereastra de editare a expirat" : "Scade stoc"}
                       >
                         -
                       </button>
-                      <span className="font-medium text-gray-900 min-w-[20px] text-center">{product.stoc}</span>
+                      <span className={`font-medium min-w-[20px] text-center ${!product.isEditable ? 'text-gray-400' : 'text-gray-900'}`}>
+                        {product.stoc}
+                      </span>
                       <button
                         onClick={() => handleStockChange(product.id, 1)}
-                        className="w-6 h-6 flex items-center justify-center bg-gray-100 hover:bg-gray-200 rounded-full text-gray-600 transition-colors"
-                        title="Adaugă stoc"
+                        disabled={!product.isEditable}
+                        className={`w-6 h-6 flex items-center justify-center bg-gray-100 rounded-full text-gray-600 transition-colors ${
+                          !product.isEditable ? 'opacity-30 cursor-not-allowed' : 'hover:bg-gray-200'
+                        }`}
+                        title={!product.isEditable ? "Fereastra de editare a expirat" : "Adaugă stoc"}
                       >
                         +
                       </button>
@@ -165,13 +180,19 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                     <button
                       onClick={() => handleEdit(product)}
-                      className="text-blue-600 hover:text-blue-900 mr-4"
+                      disabled={!product.isEditable}
+                      className={`${
+                        !product.isEditable ? 'text-gray-300 cursor-not-allowed' : 'text-blue-600 hover:text-blue-900'
+                      } mr-4`}
                     >
                       Edit
                     </button>
                     <button
                       onClick={() => handleDelete(product.id)}
-                      className="text-red-600 hover:text-red-900"
+                      disabled={!product.isEditable}
+                      className={`${
+                        !product.isEditable ? 'text-gray-300 cursor-not-allowed' : 'text-red-600 hover:text-red-900'
+                      }`}
                     >
                       Șterge
                     </button>

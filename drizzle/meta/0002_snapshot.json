@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "2e04ae39-dcd6-4927-b3c3-ead042888345",
+  "id": "5d4613e8-ed80-4a0b-b166-96bda865aca7",
   "prevId": "8c69e711-8fce-4a63-802d-2964472cc644",
   "tables": {
     "audit_logs": {
@@ -14,65 +14,58 @@
           "notNull": true,
           "autoincrement": true
         },
-        "tabel_afectat": {
-          "name": "tabel_afectat",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "coloana": {
-          "name": "coloana",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "valoare_veche": {
-          "name": "valoare_veche",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "valoare_noua": {
-          "name": "valoare_noua",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "utilizator_id": {
-          "name": "utilizator_id",
+        "user_id": {
+          "name": "user_id",
           "type": "integer",
           "primaryKey": false,
           "notNull": false,
           "autoincrement": false
         },
-        "data_creare": {
-          "name": "data_creare",
+        "actiune": {
+          "name": "actiune",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "tabel": {
+          "name": "tabel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "date_vechi": {
+          "name": "date_vechi",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "date_noi": {
+          "name": "date_noi",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "timestamp": {
+          "name": "timestamp",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
           "autoincrement": false,
-          "default": "'\"2026-03-17T20:59:51.639Z\"'"
-        },
-        "motiv": {
-          "name": "motiv",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
+          "default": "CURRENT_TIMESTAMP"
         }
       },
       "indexes": {},
       "foreignKeys": {
-        "audit_logs_utilizator_id_utilizatori_id_fk": {
-          "name": "audit_logs_utilizator_id_utilizatori_id_fk",
+        "audit_logs_user_id_utilizatori_id_fk": {
+          "name": "audit_logs_user_id_utilizatori_id_fk",
           "tableFrom": "audit_logs",
           "tableTo": "utilizatori",
           "columnsFrom": [
-            "utilizator_id"
+            "user_id"
           ],
           "columnsTo": [
             "id"

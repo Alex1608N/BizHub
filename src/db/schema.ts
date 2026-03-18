@@ -1,5 +1,5 @@
 import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
-import { relations } from 'drizzle-orm';
+import { relations, sql } from 'drizzle-orm';
 
 export const utilizatori = sqliteTable('utilizatori', {
   id: integer('id').primaryKey({ autoIncrement: true }),
@@ -75,20 +75,19 @@ export const sesiuniRelations = relations(sesiuni, ({ one }) => ({
   }),
 }));
 
-export const audit_logs = sqliteTable('audit_logs', {
+export const auditLogs = sqliteTable('audit_logs', {
   id: integer('id').primaryKey({ autoIncrement: true }),
-  tabel_afectat: text('tabel_afectat').notNull(),
-  coloana: text('coloana'),
-  valoare_veche: text('valoare_veche'),
-  valoare_noua: text('valoare_noua'),
-  utilizator_id: integer('utilizator_id').references(() => utilizatori.id),
-  data_creare: integer('data_creare', { mode: 'timestamp' }).notNull().default(new Date()),
-  motiv: text('motiv'),
+  user_id: integer('user_id').references(() => utilizatori.id),
+  actiune: text('actiune').notNull(), // ex: 'CREATE', 'UPDATE', 'DELETE'
+  tabel: text('tabel').notNull(), // ex: 'produse', 'categorii'
+  date_vechi: text('date_vechi'), // JSON format string
+  date_noi: text('date_noi'), // JSON format string
+  timestamp: integer('timestamp', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`),
 });
 
-export const auditLogsRelations = relations(audit_logs, ({ one }) => ({
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
   user: one(utilizatori, {
-    fields: [audit_logs.utilizator_id],
+    fields: [auditLogs.user_id],
     references: [utilizatori.id],
   }),
 }));

@@ -1,19 +1,18 @@
-# Story 3-3: Vizualizare Timeline Comparativ
+# User Story 3-3: Vizualizare Timeline comparativ
 
-**Status:** Backlog
-**Epic:** Epic 3: Motorul de Audit & Transparență
-**Priority:** Medium
-
-## Description
-Ca manager, doresc să vizualizez istoricul complet al unui produs sub forma unui timeline, evidențiind clar ce s-a schimbat, când și de către cine, pentru a soluționa rapid discrepanțele de inventar.
+**Status:** Ready for Dev
+**Epic:** Epic 3: Audit & Transparență (Local Integrity)
+**Description:** Ca administrator/manager, doresc să vizualizez un istoric cronologic al tuturor acțiunilor de audit într-un mod comparativ (Old vs New), pentru a înțelege exact cine și ce a modificat în sistem.
 
 ## Acceptance Criteria
-1. [ ] O pagină sau un modal "Istoric Produs" accesibil din tabelul de catalog.
-2. [ ] Afișarea unei liste cronologice de evenimente (ex: "Alex a schimbat prețul de la 10 RON la 12 RON acum 2 ore").
-3. [ ] Evidențierea vizuală a diferențelor (ex: text tăiat pentru valoarea veche, text verde pentru valoarea nouă).
-4. [ ] Filtrare după data sau utilizator în cadrul timeline-ului.
+1.  **Pagină Audit:** Crearea rutei `/audit` accesibilă din Sidebar (doar pentru ADMIN/MANAGER).
+2.  **Vizualizare Cronologică:** Afișarea logurilor în ordine invers cronologică (cele mai noi primele).
+3.  **Informații Cheie:** Afișarea: Utilizator, Acțiune (CREATE/UPDATE/DELETE), Tabel, Timestamp.
+4.  **Comparare Date:** Transformarea JSON-ului brut în câmpuri lizibile. Pentru UPDATE, să se vadă clar ce s-a schimbat (ex: Stoc: 5 -> 10).
+5.  **Design Local-First:** Interfață rapidă, folosind componentele existente (Tailwind + Lucide Icons).
 
-## Technical Tasks
-1. Crearea unui Server Action `getProductHistory` care extrage datele din `audit_logs`.
-2. Implementarea componentei UI `AuditTimeline.tsx`.
-3. Integrarea butonului de vizualizare istoric în rândurile tabelului de produse.
+## Implementation Steps
+- [ ] Crearea Server Action-ului `getAuditLogs()` în `src/app/actions/audit.ts`.
+- [ ] Adăugarea rutei `src/app/(dashboard)/audit/page.tsx`.
+- [ ] Crearea componentei `AuditTimeline.tsx` pentru afișarea datelor.
+- [ ] Integrarea link-ului "Audit Trail" în Sidebar-ul din `layout.tsx`.

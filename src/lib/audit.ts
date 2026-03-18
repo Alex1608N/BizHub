@@ -1,31 +1,66 @@
+import { auditLogs } from '@/db/schema';
+import { eq, and, sql } from 'drizzle-orm';
 import { db } from '@/db/db';
-import { audit_logs } from '@/db/schema';
 
-interface AuditLogEntry {
-  tabel_afectat: string;
-  coloana?: string;
-  valoare_veche?: string;
-  valoare_noua?: string;
-  utilizator_id?: number;
-  motiv?: string;
+interface AuditData {
+  user_id: number | null;
+  actiune: 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'IMPORT';
+  tabel: string;
+  date_vechi?: any;
+  date_noi?: any;
 }
 
 /**
  * Loghează o acțiune în tabelul de audit.
  */
-export async function logAudit(entry: AuditLogEntry) {
+export async function auditLog(
+  tx: any,
+  data: AuditData
+) {
   try {
-    await db.insert(audit_logs).values({
-      tabel_afectat: entry.tabel_afectat,
-      coloana: entry.coloana,
-      valoare_veche: entry.valoare_veche,
-      valoare_noua: entry.valoare_noua,
-      utilizator_id: entry.utilizator_id,
-      data_creare: new Date(),
-      motiv: entry.motiv,
+    await tx.insert(auditLogs).values({
+      user_id: data.user_id,
+      actiune: data.actiune,
+      tabel: data.tabel,
+      date_vechi: data.date_vechi ? JSON.stringify(data.date_vechi) : null,
+      date_noi: data.date_noi ? JSON.stringify(data.date_noi) : null,
     });
-    console.log(`[Audit] Log salvat pentru tabelul ${entry.tabel_afectat}`);
   } catch (error) {
-    console.error('[Audit Error] Nu s-a putut salva log-ul de audit:', error);
+    console.error('Eroare la salvarea log-ului de audit:', error);
   }
+}
+
+/**
+ * Verifică dacă un utilizator are dreptul să editeze un produs.
+ * - ADMIN/MANAGER: Mereu TRUE.
+ * - ANGAJAT: Doar în primele 7 zile de la crearea produsului.
+ */
+export async function canUserEditProduct(productId: number, userRole: string) {
+  if (userRole === 'ADMIN' || userRole === 'MANAGER') {
+    return true;
+  }
+
+  // Căutăm log-ul de tip CREATE pentru acest produs
+  // NOTĂ: Deoarece ID-ul este în JSON-ul stocat în date_noi, 
+  // căutăm log-ul care conține ID-ul produsului în formatul corect.
+  const createLog = await db.query.auditLogs.findFirst({
+    where: and(
+      eq(auditLogs.actiune, 'CREATE'),
+      eq(auditLogs.tabel, 'produse'),
+      sql`${auditLogs.date_noi} LIKE ${'%"id":' + productId + ',%'}`
+    ),
+    orderBy: (logs, { asc }) => [asc(logs.id)], // Primul log de creare
+  });
+
+  if (!createLog) {
+    // Dacă nu găsim log-ul de creare (produse vechi de dinaintea auditului), 
+    // presupunem că sunt vechi și blocăm editarea pentru angajați pentru siguranță.
+    return false;
+  }
+
+  const sapteZileInMs = 7 * 24 * 60 * 60 * 1000;
+  const dataCreare = new Date(createLog.timestamp).getTime();
+  const acum = Date.now();
+
+  return (acum - dataCreare) < sapteZileInMs;
 }
