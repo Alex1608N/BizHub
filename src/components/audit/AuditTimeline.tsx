@@ -1,6 +1,6 @@
 'use client';
 
-import React from 'react';
+import React, { useState, useMemo } from 'react';
 import { 
   PlusCircle, 
   RefreshCcw, 
@@ -8,9 +8,11 @@ import {
   User, 
   Database,
   ArrowRight,
-  FileDown
+  FileDown,
+  Calendar
 } from 'lucide-react';
 import { generateStockPDF } from '@/lib/pdf-generator';
+import { exportAuditToExcel } from '@/lib/excel-generator';
 
 interface AuditLog {
   id: number;
@@ -24,6 +26,32 @@ interface AuditLog {
 
 export default function AuditTimeline({ logs, company }: { logs: AuditLog[], company: any }) {
   
+  const [isExporting, setIsExporting] = useState(false);
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
+  // Filtrare loguri pe baza de date (Client-Side pentru MVP)
+  const filteredLogs = useMemo(() => {
+    return logs.filter(log => {
+      const logDate = new Date(log.timestamp).toISOString().split('T')[0];
+      if (startDate && logDate < startDate) return false;
+      if (endDate && logDate > endDate) return false;
+      return true;
+    });
+  }, [logs, startDate, endDate]);
+
+  const handleExportExcel = async () => {
+    setIsExporting(true);
+    try {
+      await exportAuditToExcel(filteredLogs, company?.nume || 'BizHub_ERP');
+    } catch (e) {
+      console.error('Excel Export Error:', e);
+      alert('Eroare la exportul Excel.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
   const handleDownloadPDF = (log: AuditLog) => {
     if (!log.date_noi || !log.date_vechi) return;
     
@@ -61,7 +89,7 @@ export default function AuditTimeline({ logs, company }: { logs: AuditLog[], com
   const renderValue = (val: any) => {
     if (val === null || val === undefined) return <span className="text-gray-400 italic">null</span>;
     if (typeof val === 'object') return JSON.stringify(val);
-    if (typeof val === 'number' && val > 1000000000000) return new Date(val).toLocaleString('ro-RO'); // timestamps
+    if (typeof val === 'number' && val > 1000000000000) return new Date(val).toLocaleString('ro-RO');
     return String(val);
   };
 
@@ -113,17 +141,68 @@ export default function AuditTimeline({ logs, company }: { logs: AuditLog[], com
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-        <div className="p-4 bg-gray-50 border-b border-gray-200 flex justify-between items-center">
-          <h2 className="font-semibold text-gray-700">Ultimele acțiuni înregistrate</h2>
-          <span className="text-xs text-gray-400">Arată ultimele {logs.length} loguri</span>
+        {/* Header cu Filtre */}
+        <div className="p-4 bg-gray-50 border-b border-gray-200 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div className="flex flex-col sm:flex-row gap-4 items-end">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-gray-400 uppercase ml-1 flex items-center gap-1">
+                <Calendar size={10} /> De la
+              </label>
+              <input 
+                type="date" 
+                value={startDate} 
+                onChange={(e) => setStartDate(e.target.value)}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-gray-400 uppercase ml-1 flex items-center gap-1">
+                <Calendar size={10} /> Până la
+              </label>
+              <input 
+                type="date" 
+                value={endDate} 
+                onChange={(e) => setEndDate(e.target.value)}
+                className="px-3 py-1.5 border border-gray-300 rounded-lg text-sm outline-none focus:ring-2 focus:ring-indigo-500 transition-all"
+              />
+            </div>
+            {(startDate || endDate) && (
+              <button 
+                onClick={() => { setStartDate(''); setEndDate(''); }}
+                className="text-xs text-indigo-600 hover:text-indigo-800 font-medium pb-2"
+              >
+                Resetează
+              </button>
+            )}
+          </div>
+          
+          <div className="flex items-center gap-3 self-end md:self-auto">
+            <div className="text-right mr-2 hidden sm:block">
+              <div className="text-sm font-semibold text-gray-700">Filtre active</div>
+              <div className="text-xs text-gray-400">{filteredLogs.length} înregistrări</div>
+            </div>
+            <button
+              onClick={handleExportExcel}
+              disabled={isExporting || filteredLogs.length === 0}
+              className="flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 disabled:bg-gray-300 text-white rounded-lg text-sm font-semibold transition-all shadow-md active:scale-95"
+            >
+              {isExporting ? (
+                <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <FileDown size={18} />
+              )}
+              Export Contabil
+            </button>
+          </div>
         </div>
         
-        <div className="divide-y divide-gray-100">
-          {logs.map((log) => (
+        {/* Lista Loguri */}
+        <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
+          {filteredLogs.map((log) => (
             <div key={log.id} className="p-5 hover:bg-gray-50/50 transition-colors group">
               <div className="flex items-start justify-between">
                 <div className="flex items-start space-x-4">
-                  <div className="mt-1 p-2 bg-gray-100 rounded-lg">
+                  <div className="mt-1 p-2 bg-gray-100 rounded-lg group-hover:bg-white transition-colors">
                     {getActionIcon(log.actiune)}
                   </div>
                   
@@ -143,14 +222,14 @@ export default function AuditTimeline({ logs, company }: { logs: AuditLog[], com
                       </div>
                       <div className="flex items-center">
                         <Database size={12} className="mr-1" />
-                        ID Log: #{log.id}
+                        ID: #{log.id}
                       </div>
                       <div>
                         {new Date(log.timestamp).toLocaleString('ro-RO')}
                       </div>
                     </div>
                     
-                    <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-100">
+                    <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-100 group-hover:border-gray-200 transition-all">
                       {formatChanges(log.date_vechi, log.date_noi)}
                     </div>
                   </div>
@@ -170,9 +249,9 @@ export default function AuditTimeline({ logs, company }: { logs: AuditLog[], com
             </div>
           ))}
 
-          {logs.length === 0 && (
+          {filteredLogs.length === 0 && (
             <div className="p-10 text-center text-gray-500 italic">
-              Nu s-au găsit loguri de audit în baza de date.
+              {logs.length === 0 ? "Nu s-au găsit loguri în baza de date." : "Nicio înregistrare pentru intervalul selectat."}
             </div>
           )}
         </div>
