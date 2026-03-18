@@ -230,7 +230,10 @@ export async function recordStockMovement(id: number, quantityChange: number) {
       return { success: false, error: 'Fereastra de editare stoc a expirat.' };
     }
 
-    const product = await db.query.produse.findFirst({ where: eq(produse.id, id) });
+    const product = await db.query.produse.findFirst({ 
+      where: eq(produse.id, id),
+      with: { unitate: true }
+    });
     if (!product) throw new Error('Produsul nu a fost gasit');
 
     const newStock = product.stoc + quantityChange;
@@ -242,8 +245,20 @@ export async function recordStockMovement(id: number, quantityChange: number) {
       user_id: session.user.id,
       actiune: 'UPDATE',
       tabel: 'stoc',
-      date_vechi: { id: product.id, stoc: product.stoc },
-      date_noi: { id: updatedProduct.id, stoc: updatedProduct.stoc },
+      date_vechi: { 
+        id: product.id, 
+        nume: product.nume, 
+        stoc: product.stoc, 
+        unitate: product.unitate?.simbol || 'Buc',
+        pret: product.pret 
+      },
+      date_noi: { 
+        id: updatedProduct.id, 
+        nume: product.nume, 
+        stoc: updatedProduct.stoc, 
+        unitate: product.unitate?.simbol || 'Buc',
+        pret: product.pret 
+      },
     });
 
     revalidatePath('/catalog');

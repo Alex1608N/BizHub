@@ -7,8 +7,10 @@ import {
   Trash2, 
   User, 
   Database,
-  ArrowRight
+  ArrowRight,
+  FileDown
 } from 'lucide-react';
+import { generateStockPDF } from '@/lib/pdf-generator';
 
 interface AuditLog {
   id: number;
@@ -20,11 +22,46 @@ interface AuditLog {
   timestamp: any;
 }
 
-export default function AuditTimeline({ logs }: { logs: AuditLog[] }) {
+export default function AuditTimeline({ logs, company }: { logs: AuditLog[], company: any }) {
   
+  const handleDownloadPDF = (log: AuditLog) => {
+    if (!log.date_noi || !log.date_vechi) return;
+    
+    try {
+      const oldData = JSON.parse(log.date_vechi);
+      const newData = JSON.parse(log.date_noi);
+      
+      const stocVechi = oldData.stoc || 0;
+      const stocNou = newData.stoc || 0;
+      const diferenta = stocNou - stocVechi;
+      
+      const produsId = newData.id || oldData.id;
+      const numeProdus = newData.nume || oldData.nume || `Produs #${produsId}`;
+      const unitate = newData.unitate || oldData.unitate || 'Buc';
+      const pret = newData.pret || oldData.pret || 0;
+
+      generateStockPDF(company || { nume: 'BizHub ERP' }, {
+        id: log.id,
+        data: new Date(log.timestamp),
+        tip: diferenta > 0 ? 'INTRARE' : 'IESIRE',
+        user: log.user?.nume || 'Sistem',
+        items: [{
+          nume: numeProdus,
+          cantitate: Math.abs(diferenta),
+          pret: pret,
+          unitate: unitate
+        }]
+      });
+    } catch (e) {
+      console.error('Error generating PDF:', e);
+      alert('Eroare la generarea PDF-ului.');
+    }
+  };
+
   const renderValue = (val: any) => {
     if (val === null || val === undefined) return <span className="text-gray-400 italic">null</span>;
     if (typeof val === 'object') return JSON.stringify(val);
+    if (typeof val === 'number' && val > 1000000000000) return new Date(val).toLocaleString('ro-RO'); // timestamps
     return String(val);
   };
 
@@ -83,7 +120,7 @@ export default function AuditTimeline({ logs }: { logs: AuditLog[] }) {
         
         <div className="divide-y divide-gray-100">
           {logs.map((log) => (
-            <div key={log.id} className="p-5 hover:bg-gray-50/50 transition-colors">
+            <div key={log.id} className="p-5 hover:bg-gray-50/50 transition-colors group">
               <div className="flex items-start justify-between">
                 <div className="flex items-start space-x-4">
                   <div className="mt-1 p-2 bg-gray-100 rounded-lg">
@@ -118,6 +155,17 @@ export default function AuditTimeline({ logs }: { logs: AuditLog[] }) {
                     </div>
                   </div>
                 </div>
+
+                {log.tabel === 'stoc' && (
+                  <button
+                    onClick={() => handleDownloadPDF(log)}
+                    className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition-all opacity-0 group-hover:opacity-100 shadow-sm"
+                    title="Descarcă PDF"
+                  >
+                    <FileDown size={14} />
+                    PDF
+                  </button>
+                )}
               </div>
             </div>
           ))}

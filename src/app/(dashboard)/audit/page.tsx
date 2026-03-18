@@ -1,4 +1,5 @@
 import { getAuditLogs } from '@/app/actions/audit';
+import { getCompany } from '@/app/actions/company';
 import { getSession } from '@/lib/auth';
 import AuditTimeline from '@/components/audit/AuditTimeline';
 import { redirect } from 'next/navigation';
@@ -13,6 +14,7 @@ export default async function AuditPage() {
   }
 
   const logs = await getAuditLogs();
+  const company = await getCompany();
 
   return (
     <div className="max-w-5xl mx-auto">
@@ -26,7 +28,7 @@ export default async function AuditPage() {
         </div>
       </div>
 
-      <AuditTimeline logs={logs} />
+      <AuditTimeline logs={logs} company={company} />
     </div>
   );
 }
