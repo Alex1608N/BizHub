@@ -17,8 +17,13 @@ export const companii = sqliteTable('companii', {
   id: integer('id').primaryKey({ autoIncrement: true }),
   nume: text('nume').notNull(),
   cui: text('cui').unique(),
+  reg_com: text('reg_com'), // Registrul Comertului
   adresa: text('adresa'),
+  iban: text('iban'),
+  banca: text('banca'),
   logo_url: text('logo_url'),
+  telefon: text('telefon'),
+  email: text('email'),
 });
 
 export const categorii = sqliteTable('categorii', {
