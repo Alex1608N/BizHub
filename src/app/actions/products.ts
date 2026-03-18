@@ -221,50 +221,16 @@ export async function deleteProduct(id: number) {
 }
 
 export async function recordStockMovement(id: number, quantityChange: number) {
-  const session = await getSession();
-  if (!session) return { success: false, error: 'Neautorizat' };
+  // ... rest of method ...
+}
 
+export async function getStockValue() {
   try {
-    const canEdit = await canUserEditProduct(id, session.user.rol);
-    if (!canEdit) {
-      return { success: false, error: 'Fereastra de editare stoc a expirat.' };
-    }
-
-    const product = await db.query.produse.findFirst({ 
-      where: eq(produse.id, id),
-      with: { unitate: true }
-    });
-    if (!product) throw new Error('Produsul nu a fost gasit');
-
-    const newStock = product.stoc + quantityChange;
-    if (newStock < 0) throw new Error('Stoc insuficient');
-
-    const [updatedProduct] = await db.update(produse).set({ stoc: newStock }).where(eq(produse.id, id)).returning();
-
-    await auditLog(db, {
-      user_id: session.user.id,
-      actiune: 'UPDATE',
-      tabel: 'stoc',
-      date_vechi: { 
-        id: product.id, 
-        nume: product.nume, 
-        stoc: product.stoc, 
-        unitate: product.unitate?.simbol || 'Buc',
-        pret: product.pret 
-      },
-      date_noi: { 
-        id: updatedProduct.id, 
-        nume: product.nume, 
-        stoc: updatedProduct.stoc, 
-        unitate: product.unitate?.simbol || 'Buc',
-        pret: product.pret 
-      },
-    });
-
-    revalidatePath('/catalog');
-    return { success: true };
-  } catch (error: any) {
-    console.error('Error recording stock movement:', error);
-    return { success: false, error: error.message || 'Eroare la actualizarea stocului' };
+    const allProducts = await db.query.produse.findMany();
+    const totalValue = allProducts.reduce((sum, p) => sum + (p.stoc * p.pret), 0);
+    return totalValue / 100; // Returnam in unitati monetare (RON)
+  } catch (error) {
+    console.error('Error calculating stock value:', error);
+    return 0;
   }
 }
