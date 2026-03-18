@@ -2,8 +2,51 @@
 
 import { db } from '@/db/db';
 import { auditLogs } from '@/db/schema';
-import { desc } from 'drizzle-orm';
+import { desc, and, gte, lte, count, sql } from 'drizzle-orm';
 import { getSession } from '@/lib/auth';
+
+/**
+ * Calculeaza rezumatul activitatii din ziua precedenta folosind agregari SQL.
+ */
+export async function getDailyAuditDigest() {
+  const session = await getSession();
+  if (!session) return { total: 0, updates: 0, creates: 0, deletes: 0 };
+
+  try {
+    const yesterdayStart = new Date();
+    yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+    yesterdayStart.setHours(0, 0, 0, 0);
+
+    const yesterdayEnd = new Date();
+    yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
+    yesterdayEnd.setHours(23, 59, 59, 999);
+
+    const [stats] = await db
+      .select({
+        total: count(),
+        updates: count(sql`CASE WHEN ${auditLogs.actiune} = 'UPDATE' THEN 1 END`),
+        creates: count(sql`CASE WHEN ${auditLogs.actiune} = 'CREATE' THEN 1 END`),
+        deletes: count(sql`CASE WHEN ${auditLogs.actiune} = 'DELETE' THEN 1 END`),
+      })
+      .from(auditLogs)
+      .where(
+        and(
+          gte(auditLogs.timestamp, yesterdayStart),
+          lte(auditLogs.timestamp, yesterdayEnd)
+        )
+      );
+
+    return {
+      total: stats.total || 0,
+      updates: stats.updates || 0,
+      creates: stats.creates || 0,
+      deletes: stats.deletes || 0,
+    };
+  } catch (error) {
+    console.error('Error fetching daily digest:', error);
+    return { total: 0, updates: 0, creates: 0, deletes: 0 };
+  }
+}
 
 /**
  * Preluăm toate logurile de audit, ordonate cronologic (cele mai noi primele).
