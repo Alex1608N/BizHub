@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import { db } from '@/db';
+import { db } from '@/db/index';
 import { utilizatori, sesiuni } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { cookies } from 'next/headers';

@@ -1,10 +1,21 @@
 'use server';
 
-import { db } from '@/db';
-import { utilizatori } from '@/db/schema';
+import { db } from '@/db/index';
+import { utilizatori, sesiuni } from '@/db/schema';
 import { eq } from 'drizzle-orm';
 import { verifyPassword, createSession } from '@/lib/auth';
 import { redirect } from 'next/navigation';
+import { cookies } from 'next/headers';
+
+export async function logout() {
+  const cookieStore = await cookies();
+  const sessionId = cookieStore.get('session_id')?.value;
+
+  if (sessionId) {
+    await db.delete(sesiuni).where(eq(sesiuni.id, sessionId));
+    cookieStore.delete('session_id');
+  }
+}
 
 export async function loginAction(formData: FormData) {
   const email = formData.get('email') as string;

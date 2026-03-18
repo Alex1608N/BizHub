@@ -42,9 +42,10 @@ export default function ProductForm({ initialData, categories, units, onSuccess,
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    const dataToSend = {
+    const { id, ...dataToSend } = {
       ...formData,
-      pret: Math.round(parseFloat(formData.pret) * 100), // convertim in bani (intreg)
+      id: initialData?.id,
+      pret: Math.round(parseFloat(formData.pret) * 100),
       categorie_id: formData.categorie_id ? parseInt(formData.categorie_id.toString()) : undefined,
       unitate_id: formData.unitate_id ? parseInt(formData.unitate_id.toString()) : undefined,
     };

@@ -37,8 +37,12 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
     });
   };
 
-  const handleStockChange = async (id: number, change: number) => {
-    const result = await recordStockMovement(id, change);
+  const handleStockChange = async (product: any, change: number) => {
+    if (product.stoc + change < 0) {
+      alert("Stocul nu poate deveni negativ!");
+      return;
+    }
+    const result = await recordStockMovement(product.id, change);
     if (!result.success) {
       alert(result.error);
     }
@@ -138,7 +142,9 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
                   <td className="px-6 py-4 whitespace-nowrap font-medium flex items-center">
                     {product.nume}
                     {!product.isEditable && (
-                      <Lock size={14} className="ml-2 text-gray-400" title="Editare restricționată (7+ zile)" />
+                      <span title="Editare restricționată (7+ zile)">
+                        <Lock size={14} className="ml-2 text-gray-400" />
+                      </span>
                     )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-600">
@@ -147,7 +153,9 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-2">
                       <button
-                        onClick={() => handleStockChange(product.id, -1)}
+                        onClick={() => {
+                          handleStockChange(product, -1);
+                        }}
                         disabled={!product.isEditable}
                         className={`w-6 h-6 flex items-center justify-center bg-gray-100 rounded-full text-gray-600 transition-colors ${
                           !product.isEditable ? 'opacity-30 cursor-not-allowed' : 'hover:bg-gray-200'
@@ -160,7 +168,9 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
                         {product.stoc}
                       </span>
                       <button
-                        onClick={() => handleStockChange(product.id, 1)}
+                        onClick={() => {
+                          handleStockChange(product, 1);
+                        }}
                         disabled={!product.isEditable}
                         className={`w-6 h-6 flex items-center justify-center bg-gray-100 rounded-full text-gray-600 transition-colors ${
                           !product.isEditable ? 'opacity-30 cursor-not-allowed' : 'hover:bg-gray-200'
@@ -188,7 +198,9 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
                       Edit
                     </button>
                     <button
-                      onClick={() => handleDelete(product.id)}
+                      onClick={() => {
+                        handleDelete(product.id);
+                      }}
                       disabled={!product.isEditable}
                       className={`${
                         !product.isEditable ? 'text-gray-300 cursor-not-allowed' : 'text-red-600 hover:text-red-900'
