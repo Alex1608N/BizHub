@@ -221,7 +221,41 @@ export async function deleteProduct(id: number) {
 }
 
 export async function recordStockMovement(id: number, quantityChange: number) {
-  // ... rest of method ...
+  const session = await getSession();
+  if (!session) return { success: false, error: 'Neautorizat' };
+
+  try {
+    const canEdit = await canUserEditProduct(id, session.user.rol);
+    if (!canEdit) {
+      return { success: false, error: 'Fereastra de editare a expirat.' };
+    }
+
+    const oldProduct = await db.query.produse.findFirst({ where: eq(produse.id, id) });
+    if (!oldProduct) return { success: false, error: 'Produsul nu a fost gasit.' };
+
+    const newStoc = (oldProduct.stoc || 0) + quantityChange;
+    if (newStoc < 0) return { success: false, error: 'Stocul nu poate fi negativ.' };
+
+    const [updatedProduct] = await db.update(produse)
+      .set({ stoc: newStoc })
+      .where(eq(produse.id, id))
+      .returning();
+
+    await auditLog(db, {
+      user_id: session.user.id,
+      actiune: 'UPDATE',
+      tabel: 'produse',
+      date_vechi: oldProduct,
+      date_noi: { ...updatedProduct, nume: oldProduct.nume }, // Fortam includerea numelui pentru Dashboard
+    });
+
+    revalidatePath('/catalog');
+    revalidatePath('/dashboard');
+    return { success: true };
+  } catch (error) {
+    console.error('Error recording stock movement:', error);
+    return { success: false, error: 'Eroare la actualizarea stocului.' };
+  }
 }
 
 export async function getStockValue() {

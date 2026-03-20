@@ -1,10 +1,10 @@
-# generated: 2026-03-13 (Actualizat de BMad Master)
+# generated: 2026-03-20 (Actualizat de Gemini CLI - Status Final Sprint 2)
 # project: practica
 # project_key: BH
 # tracking_system: jira
 # story_location: _bmad-output/implementation-artifacts
 
-generated: 2026-03-13
+generated: 2026-03-20
 project: practica
 project_key: BH
 tracking_system: jira
@@ -23,7 +23,7 @@ development_status:
   2-2-inregistrarea-miscarilor-de-stoc: done
   2-3-adaugarea-categoriilor-on-the-fly: done
   2-4-import-rapid-catalog-csv-excel: done
-  epic-2-retrospective: optional
+  epic-2-retrospective: done
 
   epic-3: done
   3-1-logarea-automata-audit-engine: done
@@ -31,15 +31,15 @@ development_status:
   3-3-vizualizare-timeline-comparativ: done
   epic-3-retrospective: done
 
-  epic-4: backlog
-  4-0-setari-firma-logo-date-fiscale: backlog
-  4-1-generare-pdf-facturi-avize: backlog
-  4-2-export-excel-xlsx-pentru-contabil: backlog
-  4-3-raport-valoric-de-stoc: backlog
-  epic-4-retrospective: optional
+  epic-4: done
+  4-0-setari-firma-logo-date-fiscale: done
+  4-1-generare-pdf-facturi-avize: done
+  4-2-export-excel-xlsx-pentru-contabil: done
+  4-3-raport-valoric-de-stoc: done
+  epic-4-retrospective: done
 
-  epic-5: backlog
-  5-1-daily-audit-digest-ieri-in-firme: backlog
-  5-2-alerte-stoc-critic: backlog
-  5-3-timeline-activitate-feed: backlog
-  epic-5-retrospective: optional
+  epic-5: done
+  5-1-daily-audit-digest-ieri-in-firme: done
+  5-2-alerte-stoc-critic: done
+  5-3-timeline-activitate-feed: done
+  epic-5-retrospective: done

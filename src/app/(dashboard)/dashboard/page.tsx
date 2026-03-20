@@ -183,45 +183,67 @@ export default async function DashboardPage() {
         </div>
         
         <div className="divide-y divide-gray-50">
-          {recentLogs.slice(0, 10).map((log) => (
-            <div key={log.id} className="p-6 hover:bg-gray-50 transition-colors flex items-start space-x-4">
-              <div className={`mt-1 p-2 rounded-full flex-shrink-0 ${
-                log.actiune === 'CREATE' ? 'bg-emerald-100 text-emerald-600' :
-                log.actiune === 'UPDATE' ? 'bg-blue-100 text-blue-600' :
-                'bg-red-100 text-red-600'
-              }`}>
-                {log.actiune === 'CREATE' ? <Package size={14} /> : 
-                 log.actiune === 'UPDATE' ? <History size={14} /> : 
-                 <AlertTriangle size={14} />}
-              </div>
-              
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between mb-1">
-                  <p className="text-sm font-bold text-gray-900">
-                    {log.actiune === 'CREATE' ? 'Adaugare Produs' : 
-                     log.actiune === 'UPDATE' ? 'Modificare Stoc/Produs' : 
-                     'Stergere'} 
-                    <span className="font-medium text-gray-400 mx-2">in</span> 
-                    <span className="text-indigo-600 uppercase text-[10px] tracking-widest font-black">{log.tabel}</span>
-                  </p>
-                  <div className="flex items-center text-[11px] text-gray-400 font-medium">
-                    <Clock size={12} className="mr-1" />
-                    {new Date(log.timestamp).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })}
-                  </div>
+          {recentLogs.slice(0, 10).map((log) => {
+            let details = "";
+            let subtext = "";
+            try {
+              const rawData = log.date_noi || log.date_vechi || "{}";
+              let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
+              if (typeof data === 'string') data = JSON.parse(data);
+              details = data.nume || data.email || data.nume_utilizator || "";
+              if (log.actiune === 'UPDATE' && data.stoc !== undefined) {
+                subtext = `Stoc actual: ${data.stoc}`;
+              }
+            } catch (e) {
+              console.error("Error parsing audit log data:", e);
+            }
+
+            return (
+              <div key={log.id} className="p-6 hover:bg-gray-50 transition-colors flex items-start space-x-4">
+                <div className={`mt-1 p-2 rounded-full flex-shrink-0 ${
+                  log.actiune === 'CREATE' ? 'bg-emerald-100 text-emerald-600' :
+                  log.actiune === 'UPDATE' ? 'bg-blue-100 text-blue-600' :
+                  'bg-red-100 text-red-600'
+                }`}>
+                  {log.actiune === 'CREATE' ? <Package size={14} /> : 
+                   log.actiune === 'UPDATE' ? <History size={14} /> : 
+                   <AlertTriangle size={14} />}
                 </div>
                 
-                <div className="flex items-center space-x-4">
-                  <div className="flex items-center text-xs text-gray-500">
-                    <User size={12} className="mr-1.5 text-gray-400" />
-                    {log.user?.nume || 'Sistem'}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-bold text-gray-900 leading-none truncate">
+                        {log.actiune === 'CREATE' ? 'Adaugare' : 
+                         log.actiune === 'UPDATE' ? 'Modificare' : 
+                         log.actiune === 'DELETE' ? 'Stergere' :
+                         log.actiune === 'IMPORT' ? 'Import' : log.actiune}
+                        {details && <span className="text-indigo-600 ml-1.5 underline decoration-indigo-200 underline-offset-4">"{details}"</span>}
+                      </p>
+                      <p className="text-[10px] text-gray-400 mt-1 font-medium uppercase tracking-wider">
+                        in <span className="text-gray-600 font-bold">{log.tabel}</span>
+                        {subtext && <span className="ml-2 text-emerald-600 font-bold">• {subtext}</span>}
+                      </p>
+                    </div>
+                    <div className="flex items-center text-[11px] text-gray-400 font-medium bg-gray-50 px-2 py-1 rounded-md ml-4 flex-shrink-0">
+                      <Clock size={12} className="mr-1 text-gray-300" />
+                      {new Date(log.timestamp).toLocaleTimeString('ro-RO', { hour: '2-digit', minute: '2-digit' })}
+                    </div>
                   </div>
-                  <div className="text-[11px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md">
-                    ID: #{log.id}
+                  
+                  <div className="flex items-center space-x-4 mt-2">
+                    <div className="flex items-center text-xs text-gray-500">
+                      <User size={12} className="mr-1.5 text-gray-400" />
+                      {log.user?.nume || 'Sistem'}
+                    </div>
+                    <div className="text-[11px] text-gray-400 bg-gray-100 px-2 py-0.5 rounded-md">
+                      ID: #{log.id}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {recentLogs.length === 0 && (
             <div className="p-12 text-center">

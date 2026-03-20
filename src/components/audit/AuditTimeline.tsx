@@ -9,7 +9,8 @@ import {
   Database,
   ArrowRight,
   FileDown,
-  Calendar
+  Calendar,
+  Clock
 } from 'lucide-react';
 import { generateStockPDF } from '@/lib/pdf-generator';
 import { exportAuditToExcel } from '@/lib/excel-generator';
@@ -198,56 +199,70 @@ export default function AuditTimeline({ logs, company }: { logs: AuditLog[], com
         
         {/* Lista Loguri */}
         <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
-          {filteredLogs.map((log) => (
-            <div key={log.id} className="p-5 hover:bg-gray-50/50 transition-colors group">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start space-x-4">
-                  <div className="mt-1 p-2 bg-gray-100 rounded-lg group-hover:bg-white transition-colors">
-                    {getActionIcon(log.actiune)}
-                  </div>
-                  
-                  <div>
-                    <div className="flex items-center space-x-2">
-                      <span className="font-bold text-gray-900">{log.actiune}</span>
-                      <span className="text-gray-400">pe</span>
-                      <span className="px-2 py-0.5 bg-indigo-50 text-indigo-700 rounded text-xs font-mono uppercase">
-                        {log.tabel}
-                      </span>
-                    </div>
-                    
-                    <div className="mt-1 flex items-center space-x-3 text-xs text-gray-500">
-                      <div className="flex items-center">
-                        <User size={12} className="mr-1" />
-                        {log.user?.nume || 'Sistem'}
-                      </div>
-                      <div className="flex items-center">
-                        <Database size={12} className="mr-1" />
-                        ID: #{log.id}
-                      </div>
-                      <div>
-                        {new Date(log.timestamp).toLocaleString('ro-RO')}
-                      </div>
-                    </div>
-                    
-                    <div className="mt-3 p-3 bg-gray-50 rounded-lg border border-gray-100 group-hover:border-gray-200 transition-all">
-                      {formatChanges(log.date_vechi, log.date_noi)}
-                    </div>
-                  </div>
-                </div>
+          {filteredLogs.map((log) => {
+            let itemName = "";
+            try {
+              const data = JSON.parse(log.date_noi || log.date_vechi || "{}");
+              itemName = data.nume || data.email || "";
+            } catch (e) {}
 
-                {log.tabel === 'stoc' && (
-                  <button
-                    onClick={() => handleDownloadPDF(log)}
-                    className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition-all opacity-0 group-hover:opacity-100 shadow-sm"
-                    title="Descarcă PDF"
-                  >
-                    <FileDown size={14} />
-                    PDF
-                  </button>
-                )}
+            return (
+              <div key={log.id} className="p-5 hover:bg-gray-50/50 transition-colors group border-b border-gray-50 last:border-0">
+                <div className="flex items-start justify-between">
+                  <div className="flex items-start space-x-4">
+                    <div className="mt-1 p-2 bg-gray-100 rounded-lg group-hover:bg-white shadow-sm transition-colors border border-gray-100">
+                      {getActionIcon(log.actiune)}
+                    </div>
+                    
+                    <div className="flex-1">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-black text-gray-900 tracking-tight">{log.actiune}</span>
+                        {itemName && (
+                          <span className="text-indigo-600 font-bold bg-indigo-50 px-2 py-0.5 rounded border border-indigo-100">
+                            "{itemName}"
+                          </span>
+                        )}
+                        <span className="text-gray-400 text-xs font-medium lowercase">pe</span>
+                        <span className="px-1.5 py-0.5 bg-gray-100 text-gray-600 rounded text-[10px] font-black uppercase tracking-widest border border-gray-200">
+                          {log.tabel}
+                        </span>
+                      </div>
+                      
+                      <div className="mt-1.5 flex flex-wrap items-center gap-y-1 gap-x-4 text-[11px] text-gray-400 font-medium">
+                        <div className="flex items-center text-gray-600">
+                          <User size={12} className="mr-1 text-gray-400" />
+                          {log.user?.nume || 'Sistem'}
+                        </div>
+                        <div className="flex items-center">
+                          <Database size={12} className="mr-1 text-gray-300" />
+                          ID: #{log.id}
+                        </div>
+                        <div className="flex items-center">
+                          <Clock size={12} className="mr-1 text-gray-300" />
+                          {new Date(log.timestamp).toLocaleString('ro-RO')}
+                        </div>
+                      </div>
+                      
+                      <div className="mt-3 p-4 bg-white rounded-xl border border-gray-100 group-hover:border-indigo-100 shadow-sm transition-all">
+                        {formatChanges(log.date_vechi, log.date_noi)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {log.tabel === 'stoc' && (
+                    <button
+                      onClick={() => handleDownloadPDF(log)}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-indigo-50 text-indigo-600 hover:bg-indigo-100 rounded-lg text-xs font-semibold transition-all opacity-0 group-hover:opacity-100 shadow-sm"
+                      title="Descarcă PDF"
+                    >
+                      <FileDown size={14} />
+                      PDF
+                    </button>
+                  )}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
 
           {filteredLogs.length === 0 && (
             <div className="p-10 text-center text-gray-500 italic">

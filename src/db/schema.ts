@@ -87,7 +87,7 @@ export const auditLogs = sqliteTable('audit_logs', {
   tabel: text('tabel').notNull(), // ex: 'produse', 'categorii'
   date_vechi: text('date_vechi'), // JSON format string
   date_noi: text('date_noi'), // JSON format string
-  timestamp: integer('timestamp', { mode: 'timestamp' }).notNull().default(sql`CURRENT_TIMESTAMP`),
+  timestamp: integer('timestamp', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now') * 1000)`),
 });
 
 export const auditLogsRelations = relations(auditLogs, ({ one }) => ({

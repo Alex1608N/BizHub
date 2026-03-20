@@ -24,6 +24,7 @@ export async function auditLog(
       tabel: data.tabel,
       date_vechi: data.date_vechi ? JSON.stringify(data.date_vechi) : null,
       date_noi: data.date_noi ? JSON.stringify(data.date_noi) : null,
+      timestamp: new Date(),
     });
   } catch (error) {
     console.error('Eroare la salvarea log-ului de audit:', error);

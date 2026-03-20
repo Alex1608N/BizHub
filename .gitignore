@@ -12,6 +12,7 @@ practica.db
 
 # BMAD Boilerplate (Excluse din Git tracking)
 .agent/
+.cline/
 .clinerules/
 .gemini/
 _bmad/
