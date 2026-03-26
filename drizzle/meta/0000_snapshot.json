@@ -1,124 +1,304 @@
 {
-  "version": "6",
-  "dialect": "sqlite",
-  "id": "339319b3-18ca-4286-bbc3-28d7676fde36",
+  "id": "dd4186fc-cbfd-46aa-b5bf-df16dd3f0da2",
   "prevId": "00000000-0000-0000-0000-000000000000",
+  "version": "7",
+  "dialect": "postgresql",
   "tables": {
-    "categorii": {
-      "name": "categorii",
+    "public.audit_logs": {
+      "name": "audit_logs",
+      "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "integer",
+          "type": "serial",
           "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "nume": {
-          "name": "nume",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "descriere": {
-          "name": "descriere",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "categorii_nume_unique": {
-          "name": "categorii_nume_unique",
-          "columns": [
-            "nume"
-          ],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "companii": {
-      "name": "companii",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "integer",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
-        },
-        "nume": {
-          "name": "nume",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
-        },
-        "cui": {
-          "name": "cui",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "adresa": {
-          "name": "adresa",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        },
-        "logo_url": {
-          "name": "logo_url",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false,
-          "autoincrement": false
-        }
-      },
-      "indexes": {
-        "companii_cui_unique": {
-          "name": "companii_cui_unique",
-          "columns": [
-            "cui"
-          ],
-          "isUnique": true
-        }
-      },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
-    },
-    "sesiuni": {
-      "name": "sesiuni",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "text",
-          "primaryKey": true,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": true
         },
         "user_id": {
           "name": "user_id",
           "type": "integer",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": false
         },
-        "data_expirare": {
-          "name": "data_expirare",
+        "actiune": {
+          "name": "actiune",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "tabel": {
+          "name": "tabel",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "date_vechi": {
+          "name": "date_vechi",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "date_noi": {
+          "name": "date_noi",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "timestamp": {
+          "name": "timestamp",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "audit_logs_user_id_utilizatori_id_fk": {
+          "name": "audit_logs_user_id_utilizatori_id_fk",
+          "tableFrom": "audit_logs",
+          "tableTo": "utilizatori",
+          "columnsFrom": [
+            "user_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.categorii": {
+      "name": "categorii",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nume": {
+          "name": "nume",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descriere": {
+          "name": "descriere",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "categorii_nume_unique": {
+          "name": "categorii_nume_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "nume"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.companii": {
+      "name": "companii",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nume": {
+          "name": "nume",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "cui": {
+          "name": "cui",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "reg_com": {
+          "name": "reg_com",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "adresa": {
+          "name": "adresa",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "iban": {
+          "name": "iban",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "banca": {
+          "name": "banca",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "logo_url": {
+          "name": "logo_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "telefon": {
+          "name": "telefon",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "email": {
+          "name": "email",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "companii_cui_unique": {
+          "name": "companii_cui_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "cui"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.produse": {
+      "name": "produse",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "serial",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "nume": {
+          "name": "nume",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "descriere": {
+          "name": "descriere",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "pret": {
+          "name": "pret",
           "type": "integer",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false
+          "default": 0
+        },
+        "stoc": {
+          "name": "stoc",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
+        "categorie_id": {
+          "name": "categorie_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "unitate_id": {
+          "name": "unitate_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": false
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "produse_categorie_id_categorii_id_fk": {
+          "name": "produse_categorie_id_categorii_id_fk",
+          "tableFrom": "produse",
+          "tableTo": "categorii",
+          "columnsFrom": [
+            "categorie_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "produse_unitate_id_unitati_id_fk": {
+          "name": "produse_unitate_id_unitati_id_fk",
+          "tableFrom": "produse",
+          "tableTo": "unitati",
+          "columnsFrom": [
+            "unitate_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.sesiuni": {
+      "name": "sesiuni",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "user_id": {
+          "name": "user_id",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "data_expirare": {
+          "name": "data_expirare",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
         }
       },
       "indexes": {},
@@ -139,117 +319,130 @@
       },
       "compositePrimaryKeys": {},
       "uniqueConstraints": {},
-      "checkConstraints": {}
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "unitati": {
+    "public.unitati": {
       "name": "unitati",
+      "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "integer",
+          "type": "serial",
           "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
+          "notNull": true
         },
         "nume": {
           "name": "nume",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": true
         },
         "simbol": {
           "name": "simbol",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": true
         }
       },
-      "indexes": {
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
         "unitati_nume_unique": {
           "name": "unitati_nume_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "nume"
-          ],
-          "isUnique": true
+          ]
         },
         "unitati_simbol_unique": {
           "name": "unitati_simbol_unique",
+          "nullsNotDistinct": false,
           "columns": [
             "simbol"
-          ],
-          "isUnique": true
+          ]
         }
       },
-      "foreignKeys": {},
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     },
-    "utilizatori": {
+    "public.utilizatori": {
       "name": "utilizatori",
+      "schema": "",
       "columns": {
         "id": {
           "name": "id",
-          "type": "integer",
+          "type": "serial",
           "primaryKey": true,
-          "notNull": true,
-          "autoincrement": true
+          "notNull": true
         },
         "nume": {
           "name": "nume",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": true
         },
         "email": {
           "name": "email",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": true
         },
         "parola_hash": {
           "name": "parola_hash",
           "type": "text",
           "primaryKey": false,
-          "notNull": true,
-          "autoincrement": false
+          "notNull": true
         },
         "rol": {
           "name": "rol",
-          "type": "text",
+          "type": "rol",
+          "typeSchema": "public",
           "primaryKey": false,
           "notNull": true,
-          "autoincrement": false,
           "default": "'ANGAJAT'"
         }
       },
-      "indexes": {
-        "utilizatori_email_unique": {
-          "name": "utilizatori_email_unique",
-          "columns": [
-            "email"
-          ],
-          "isUnique": true
-        }
-      },
+      "indexes": {},
       "foreignKeys": {},
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {},
-      "checkConstraints": {}
+      "uniqueConstraints": {
+        "utilizatori_email_unique": {
+          "name": "utilizatori_email_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "email"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
     }
   },
-  "views": {},
-  "enums": {},
-  "_meta": {
-    "schemas": {},
-    "tables": {},
-    "columns": {}
+  "enums": {
+    "public.rol": {
+      "name": "rol",
+      "schema": "public",
+      "values": [
+        "ADMIN",
+        "MANAGER",
+        "ANGAJAT",
+        "CONTABIL"
+      ]
+    }
   },
-  "internal": {
-    "indexes": {}
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
   }
 }

@@ -1,20 +1,22 @@
-import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+import { pgTable, text, integer, serial, timestamp, pgEnum } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 
-export const utilizatori = sqliteTable('utilizatori', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const rolEnum = pgEnum('rol', ['ADMIN', 'MANAGER', 'ANGAJAT', 'CONTABIL']);
+
+export const utilizatori = pgTable('utilizatori', {
+  id: serial('id').primaryKey(),
   nume: text('nume').notNull(),
   email: text('email').notNull().unique(),
   parola_hash: text('parola_hash').notNull(),
-  rol: text('rol', { enum: ['ADMIN', 'MANAGER', 'ANGAJAT', 'CONTABIL'] }).notNull().default('ANGAJAT'),
+  rol: rolEnum('rol').notNull().default('ANGAJAT'),
 });
 
 export const utilizatoriRelations = relations(utilizatori, ({ many }) => ({
   sesiuni: many(sesiuni),
 }));
 
-export const companii = sqliteTable('companii', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const companii = pgTable('companii', {
+  id: serial('id').primaryKey(),
   nume: text('nume').notNull(),
   cui: text('cui').unique(),
   reg_com: text('reg_com'), // Registrul Comertului
@@ -26,8 +28,8 @@ export const companii = sqliteTable('companii', {
   email: text('email'),
 });
 
-export const categorii = sqliteTable('categorii', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const categorii = pgTable('categorii', {
+  id: serial('id').primaryKey(),
   nume: text('nume').notNull().unique(),
   descriere: text('descriere'),
 });
@@ -36,8 +38,8 @@ export const categoriiRelations = relations(categorii, ({ many }) => ({
   produse: many(produse),
 }));
 
-export const unitati = sqliteTable('unitati', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const unitati = pgTable('unitati', {
+  id: serial('id').primaryKey(),
   nume: text('nume').notNull().unique(),
   simbol: text('simbol').notNull().unique(), // ex: Buc, Kg, L
 });
@@ -46,8 +48,8 @@ export const unitatiRelations = relations(unitati, ({ many }) => ({
   produse: many(produse),
 }));
 
-export const produse = sqliteTable('produse', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const produse = pgTable('produse', {
+  id: serial('id').primaryKey(),
   nume: text('nume').notNull(),
   descriere: text('descriere'),
   pret: integer('pret').notNull().default(0), // pret in bani (ex: 1050 = 10.50 RON)
@@ -67,10 +69,10 @@ export const produseRelations = relations(produse, ({ one }) => ({
   }),
 }));
 
-export const sesiuni = sqliteTable('sesiuni', {
+export const sesiuni = pgTable('sesiuni', {
   id: text('id').primaryKey(), // UUID token
   user_id: integer('user_id').notNull().references(() => utilizatori.id),
-  data_expirare: integer('data_expirare', { mode: 'timestamp' }).notNull(),
+  data_expirare: timestamp('data_expirare', { withTimezone: true }).notNull(),
 });
 
 export const sesiuniRelations = relations(sesiuni, ({ one }) => ({
@@ -80,14 +82,14 @@ export const sesiuniRelations = relations(sesiuni, ({ one }) => ({
   }),
 }));
 
-export const auditLogs = sqliteTable('audit_logs', {
-  id: integer('id').primaryKey({ autoIncrement: true }),
+export const auditLogs = pgTable('audit_logs', {
+  id: serial('id').primaryKey(),
   user_id: integer('user_id').references(() => utilizatori.id),
   actiune: text('actiune').notNull(), // ex: 'CREATE', 'UPDATE', 'DELETE'
   tabel: text('tabel').notNull(), // ex: 'produse', 'categorii'
   date_vechi: text('date_vechi'), // JSON format string
   date_noi: text('date_noi'), // JSON format string
-  timestamp: integer('timestamp', { mode: 'timestamp' }).notNull().default(sql`(strftime('%s', 'now') * 1000)`),
+  timestamp: timestamp('timestamp', { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
