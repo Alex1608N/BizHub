@@ -1,9 +1,9 @@
 import { auditLogs } from '@/db/schema';
 import { eq, and, sql } from 'drizzle-orm';
-import { db } from '@/db/db';
+import { db } from '@/db/index';
 
 interface AuditData {
-  user_id: number | null;
+  user_id: string | null;
   actiune: 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'IMPORT';
   tabel: string;
   date_vechi?: any;

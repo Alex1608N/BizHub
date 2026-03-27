@@ -1,54 +1,33 @@
-import bcrypt from 'bcryptjs';
 import { db } from '@/db/index';
-import { utilizatori, sesiuni } from '@/db/schema';
+import { utilizatori } from '@/db/schema';
 import { eq } from 'drizzle-orm';
-import { cookies } from 'next/headers';
-
-export async function hashPassword(password: string) {
-  return bcrypt.hash(password, 10);
-}
-
-export async function verifyPassword(password: string, hash: string) {
-  return bcrypt.compare(password, hash);
-}
-
-export async function createSession(userId: number) {
-  const sessionId = crypto.randomUUID(); // folosim standardul web crypto pentru id
-  const expirationDate = new Date(Date.now() + 1000 * 60 * 60 * 24 * 7); // 7 zile
-
-  await db.insert(sesiuni).values({
-    id: sessionId,
-    user_id: userId,
-    data_expirare: expirationDate,
-  });
-
-  const cookieStore = await cookies();
-  cookieStore.set('session_id', sessionId, {
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    expires: expirationDate,
-  });
-
-  return sessionId;
-}
+import { createClient } from './supabase';
 
 export async function getSession() {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get('session_id')?.value;
+  const supabase = await createClient();
+  
+  // 1. Luam user-ul din sesiunea Supabase
+  const { data: { user: authUser }, error } = await supabase.auth.getUser();
 
-  if (!sessionId) return null;
-
-  const session = await db.query.sesiuni.findFirst({
-    where: eq(sesiuni.id, sessionId),
-    with: {
-      user: true, // va trebui sa adaugam relatia in schema daca nu exista
-    }
-  });
-
-  if (!session || session.data_expirare < new Date()) {
+  if (error || !authUser) {
+    console.log('DEBUG: No authUser found in Supabase', error?.message);
     return null;
   }
 
-  return session;
+  // 2. Cautam profilul user-ului in tabelul nostru 'utilizatori'
+  const [userProfile] = await db.select()
+    .from(utilizatori)
+    .where(eq(utilizatori.id, authUser.id))
+    .limit(1);
+
+  if (!userProfile) {
+    console.log('DEBUG: No profile found for UUID:', authUser.id);
+    return null;
+  }
+
+  console.log('DEBUG: Session found for:', userProfile.email);
+  return {
+    user: userProfile,
+    expires: new Date(Date.now() + 1000 * 60 * 60 * 24).toISOString(), 
+  };
 }

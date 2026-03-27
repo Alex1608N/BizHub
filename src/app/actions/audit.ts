@@ -1,6 +1,6 @@
 'use server';
 
-import { db } from '@/db/db';
+import { db } from '@/db/index';
 import { auditLogs } from '@/db/schema';
 import { desc, and, gte, lte, count, sql } from 'drizzle-orm';
 import { getSession } from '@/lib/auth';

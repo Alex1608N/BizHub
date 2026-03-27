@@ -8,6 +8,13 @@
       "when": 1774566108975,
       "tag": "0000_initial_postgres",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1774614351147,
+      "tag": "0001_migration_uuid_auth",
+      "breakpoints": true
     }
   ]
 }

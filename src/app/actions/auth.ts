@@ -1,20 +1,12 @@
 'use server';
 
-import { db } from '@/db/index';
-import { utilizatori, sesiuni } from '@/db/schema';
-import { eq } from 'drizzle-orm';
-import { verifyPassword, createSession } from '@/lib/auth';
+import { createClient } from '@/lib/supabase';
 import { redirect } from 'next/navigation';
-import { cookies } from 'next/headers';
 
 export async function logout() {
-  const cookieStore = await cookies();
-  const sessionId = cookieStore.get('session_id')?.value;
-
-  if (sessionId) {
-    await db.delete(sesiuni).where(eq(sesiuni.id, sessionId));
-    cookieStore.delete('session_id');
-  }
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect('/login');
 }
 
 export async function loginAction(formData: FormData) {
@@ -25,26 +17,16 @@ export async function loginAction(formData: FormData) {
     return { error: 'Toate câmpurile sunt obligatorii.' };
   }
 
-  try {
-    const user = await db.query.utilizatori.findFirst({
-      where: eq(utilizatori.email, email),
-    });
+  const supabase = await createClient();
 
-    if (!user) {
-      return { error: 'Email sau parolă incorectă.' };
-    }
+  const { error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
-    const isPasswordValid = await verifyPassword(password, user.parola_hash);
-
-    if (!isPasswordValid) {
-      return { error: 'Email sau parolă incorectă.' };
-    }
-
-    await createSession(user.id);
-    
-  } catch (error) {
-    console.error('Login error:', error);
-    return { error: 'A apărut o eroare la autentificare.' };
+  if (error) {
+    console.error('Login error:', error.message);
+    return { error: 'Email sau parolă incorectă.' };
   }
 
   redirect('/dashboard');

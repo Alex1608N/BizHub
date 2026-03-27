@@ -1,13 +1,12 @@
-import { pgTable, text, integer, serial, timestamp, pgEnum } from 'drizzle-orm/pg-core';
+import { pgTable, text, integer, serial, timestamp, pgEnum, uuid } from 'drizzle-orm/pg-core';
 import { relations, sql } from 'drizzle-orm';
 
 export const rolEnum = pgEnum('rol', ['ADMIN', 'MANAGER', 'ANGAJAT', 'CONTABIL']);
 
 export const utilizatori = pgTable('utilizatori', {
-  id: serial('id').primaryKey(),
+  id: uuid('id').primaryKey(), // ID de la Supabase Auth
   nume: text('nume').notNull(),
   email: text('email').notNull().unique(),
-  parola_hash: text('parola_hash').notNull(),
   rol: rolEnum('rol').notNull().default('ANGAJAT'),
 });
 
@@ -71,7 +70,7 @@ export const produseRelations = relations(produse, ({ one }) => ({
 
 export const sesiuni = pgTable('sesiuni', {
   id: text('id').primaryKey(), // UUID token
-  user_id: integer('user_id').notNull().references(() => utilizatori.id),
+  user_id: uuid('user_id').notNull().references(() => utilizatori.id),
   data_expirare: timestamp('data_expirare', { withTimezone: true }).notNull(),
 });
 
@@ -84,7 +83,7 @@ export const sesiuniRelations = relations(sesiuni, ({ one }) => ({
 
 export const auditLogs = pgTable('audit_logs', {
   id: serial('id').primaryKey(),
-  user_id: integer('user_id').references(() => utilizatori.id),
+  user_id: uuid('user_id').references(() => utilizatori.id),
   actiune: text('actiune').notNull(), // ex: 'CREATE', 'UPDATE', 'DELETE'
   tabel: text('tabel').notNull(), // ex: 'produse', 'categorii'
   date_vechi: text('date_vechi'), // JSON format string
