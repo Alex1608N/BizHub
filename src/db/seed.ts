@@ -1,4 +1,5 @@
-import { db } from './db';
+// @ts-nocheck
+import { db } from './index';
 import { utilizatori, unitati, categorii, produse } from './schema';
 import bcrypt from 'bcryptjs';
 

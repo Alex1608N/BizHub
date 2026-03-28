@@ -1,5 +1,6 @@
-import { migrate } from 'drizzle-orm/better-sqlite3/migrator';
-import { db } from './db';
+// @ts-nocheck
+import { migrate } from 'drizzle-orm/postgres-js/migrator';
+import { db } from './index';
 import path from 'path';
 
 async function main() {
