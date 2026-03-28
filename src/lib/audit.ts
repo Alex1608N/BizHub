@@ -54,9 +54,9 @@ export async function canUserEditProduct(productId: number, userRole: string) {
   });
 
   if (!createLog) {
-    // Dacă nu găsim log-ul de creare (produse vechi de dinaintea auditului), 
-    // presupunem că sunt vechi și blocăm editarea pentru angajați pentru siguranță.
-    return false;
+    // Dacă nu găsim log-ul de creare (produse vechi sau importate fără audit), 
+    // permitem editarea pentru a nu bloca activitatea pe produsele existente.
+    return true;
   }
 
   const sapteZileInMs = 7 * 24 * 60 * 60 * 1000;

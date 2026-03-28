@@ -9,22 +9,40 @@ import { getSession } from '@/lib/auth';
 
 export async function getProducts() {
   const session = await getSession();
-  const products = await db.query.produse.findMany({
-    with: {
-      categorie: true,
-      unitate: true,
+  const results = await db.select({
+    id: produse.id,
+    nume: produse.nume,
+    descriere: produse.descriere,
+    pret: produse.pret,
+    stoc: produse.stoc,
+    categorie_id: produse.categorie_id,
+    unitate_id: produse.unitate_id,
+    categorie: {
+      id: categorii.id,
+      nume: categorii.nume,
     },
-  });
+    unitate: {
+      id: unitati.id,
+      simbol: unitati.simbol,
+    }
+  })
+  .from(produse)
+  .leftJoin(categorii, eq(produse.categorie_id, categorii.id))
+  .leftJoin(unitati, eq(produse.unitate_id, unitati.id));
+
+  const products = results;
 
   if (!session) {
     return products.map(p => ({ ...p, isEditable: false }));
   }
 
   const userRole = session.user.rol;
+  // Pentru ADMIN si MANAGER nu avem nevoie de audit logs, suntem direct editabili
   if (userRole === 'ADMIN' || userRole === 'MANAGER') {
     return products.map(p => ({ ...p, isEditable: true }));
   }
 
+  // Doar pentru angajati si altii verificam istoricul
   const allCreateLogs = await db.query.auditLogs.findMany({
     where: and(
       eq(auditLogs.actiune, 'CREATE'),
@@ -45,7 +63,8 @@ export async function getProducts() {
 
   return products.map(p => {
     const dataCreare = creationDatesMap.get(p.id);
-    const isWithinWindow = dataCreare ? (acum - dataCreare) < sapteZileInMs : false;
+    // Dacă nu avem data creării (produs importat), permitem editarea
+    const isWithinWindow = dataCreare ? (acum - dataCreare) < sapteZileInMs : true;
     return { ...p, isEditable: isWithinWindow };
   });
 }
