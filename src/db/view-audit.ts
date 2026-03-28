@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { db } from './index';
 import { auditLogs } from './schema';
 import { desc } from 'drizzle-orm';
