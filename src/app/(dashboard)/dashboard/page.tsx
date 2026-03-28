@@ -63,7 +63,7 @@ export default async function DashboardPage() {
 
       {/* Stats Grid */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat, i) => (
+        {stats.map((stat: any, i: number) => (
           <div key={i} className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all duration-200 group">
             <div className="flex justify-between items-start">
               <div>
@@ -185,7 +185,7 @@ export default async function DashboardPage() {
         </div>
         
         <div className="divide-y divide-gray-50">
-          {recentLogs.slice(0, 10).map((log) => {
+          {recentLogs.slice(0, 10).map((log: any) => {
             let details = "";
             let subtext = "";
             try {
