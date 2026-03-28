@@ -8,21 +8,17 @@ if (!connectionString) {
   throw new Error('DATABASE_URL is missing from .env');
 }
 
-// In development, we use a global variable to prevent too many connections
-// during Next.js Hot Module Replacement (HMR).
+// Prevent multiple connections to the database in development and production
+let client: any;
 let db: any;
 
-if (process.env.NODE_ENV === 'production') {
-  const client = postgres(connectionString);
+if (!global.db) {
+  client = postgres(connectionString, { prepare: false });
   db = drizzle(client, { schema });
-} else {
-  // @ts-ignore
-  if (!global.db) {
-    const client = postgres(connectionString);
-    // @ts-ignore
-    global.db = drizzle(client, { schema });
+  if (process.env.NODE_ENV !== 'production') {
+    global.db = db;
   }
-  // @ts-ignore
+} else {
   db = global.db;
 }
 
