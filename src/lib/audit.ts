@@ -45,12 +45,12 @@ export async function canUserEditProduct(productId: number, userRole: string) {
   // NOTĂ: Deoarece ID-ul este în JSON-ul stocat în date_noi, 
   // căutăm log-ul care conține ID-ul produsului în formatul corect.
   const createLog = await db.query.auditLogs.findFirst({
-    where: and(
-      eq(auditLogs.actiune, 'CREATE'),
-      eq(auditLogs.tabel, 'produse'),
-      sql`${auditLogs.date_noi} LIKE ${'%"id":' + productId + ',%'}`
+    where: (logs: any, { and, eq }) => and(
+      eq(logs.actiune, 'CREATE'),
+      eq(logs.tabel, 'produse'),
+      sql`${logs.date_noi} LIKE ${'%\"id\":' + productId + ',%'}`
     ),
-    orderBy: (logs, { asc }) => [asc(logs.id)], // Primul log de creare
+    orderBy: (logs: any, { asc }) => [asc(logs.id)], // Primul log de creare
   });
 
   if (!createLog) {
