@@ -280,7 +280,7 @@ export async function recordStockMovement(id: number, quantityChange: number) {
 export async function getStockValue() {
   try {
     const allProducts = await db.query.produse.findMany();
-    const totalValue = allProducts.reduce((sum, p) => sum + (p.stoc * p.pret), 0);
+    const totalValue = allProducts.reduce((sum: number, p: any) => sum + (p.stoc * p.pret), 0);
     return totalValue / 100; // Returnam in unitati monetare (RON)
   } catch (error) {
     console.error('Error calculating stock value:', error);
