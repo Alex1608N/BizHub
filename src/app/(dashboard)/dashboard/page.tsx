@@ -5,13 +5,15 @@ import { getSession } from "@/lib/auth";
 import { TrendingUp, Package, Store, AlertTriangle, Wallet, History, User, Clock } from "lucide-react";
 
 export default async function DashboardPage() {
-  const session = await getSession();
-  const stockValue = await getStockValue();
-  const products = await getProducts();
-  const dailyDigest = await getDailyAuditDigest();
-  const recentLogs = await getAuditLogs();
+  const [session, stockValue, products, dailyDigest, recentLogs] = await Promise.all([
+    getSession(),
+    getStockValue(),
+    getProducts(),
+    getDailyAuditDigest(),
+    getAuditLogs()
+  ]);
   
-  const lowStockCount = products.filter(p => p.stoc < 5).length;
+  const lowStockCount = products.filter((p: any) => p.stoc < 5).length;
 
   const stats = [
     { 
