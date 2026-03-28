@@ -1,4 +1,4 @@
-import { db } from './db';
+import { db } from './index';
 import { auditLogs, produse } from './schema';
 import { auditLog } from '../lib/audit';
 import { eq } from 'drizzle-orm';

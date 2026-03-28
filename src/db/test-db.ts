@@ -1,11 +1,11 @@
-import { db } from './db';
+import { db } from './index';
 import { utilizatori } from './schema';
 
 async function main() {
   console.log('🧪 Testare conexiune bază de date...');
   
   try {
-    const users = await db.select().from(utilizatori).all();
+    const users = await db.select().from(utilizatori);
     console.log(`✅ Conexiune reușită! Tabelul 'utilizatori' a fost accesat.`);
     console.log(`📊 Număr de utilizatori găsiți: ${users.length}`);
   } catch (error) {
