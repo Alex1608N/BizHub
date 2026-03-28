@@ -99,7 +99,7 @@ export default async function DashboardPage() {
               </span>
             </div>
 
-            {products.filter(p => p.stoc < 5).length > 0 ? (
+            {products.filter((p: any) => p.stoc < 5).length > 0 ? (
               <div className="flex-1 overflow-auto">
                 <table className="w-full text-left">
                   <thead>
@@ -109,7 +109,7 @@ export default async function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 text-sm">
-                    {products.filter(p => p.stoc < 5).map((p) => (
+                    {products.filter((p: any) => p.stoc < 5).map((p: any) => (
                       <tr key={p.id} className="group hover:bg-gray-50 transition-colors">
                         <td className="py-4 font-semibold text-gray-700">{p.nume}</td>
                         <td className="py-4 text-right">
