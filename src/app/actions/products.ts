@@ -33,13 +33,13 @@ export async function getProducts() {
   const products = results;
 
   if (!session) {
-    return products.map(p => ({ ...p, isEditable: false }));
+    return products.map((p: any) => ({ ...p, isEditable: false }));
   }
 
   const userRole = session.user.rol;
   // Pentru ADMIN si MANAGER nu avem nevoie de audit logs, suntem direct editabili
   if (userRole === 'ADMIN' || userRole === 'MANAGER') {
-    return products.map(p => ({ ...p, isEditable: true }));
+    return products.map((p: any) => ({ ...p, isEditable: true }));
   }
 
   // Doar pentru angajati si altii verificam istoricul
@@ -54,14 +54,14 @@ export async function getProducts() {
   const acum = Date.now();
 
   const creationDatesMap = new Map<number, number>();
-  allCreateLogs.forEach(log => {
+  allCreateLogs.forEach((log: any) => {
     try {
       const data = JSON.parse(log.date_noi || '{}');
       if (data.id) creationDatesMap.set(data.id, new Date(log.timestamp).getTime());
     } catch (e) {}
   });
 
-  return products.map(p => {
+  return products.map((p: any) => {
     const dataCreare = creationDatesMap.get(p.id);
     // Dacă nu avem data creării (produs importat), permitem editarea
     const isWithinWindow = dataCreare ? (acum - dataCreare) < sapteZileInMs : true;
