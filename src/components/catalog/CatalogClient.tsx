@@ -92,10 +92,13 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Catalog Produse</h1>
-        <div className="flex space-x-3">
+    <div className="p-4 md:p-6 lg:p-8">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Catalog Produse</h1>
+          <p className="text-sm text-gray-500 mt-1">Gestionează inventarul și prețurile produselor.</p>
+        </div>
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
           {!isFormOpen && (
             <>
               <input
@@ -107,13 +110,13 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded-md transition-colors border"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center bg-white hover:bg-gray-50 text-gray-700 px-4 py-2.5 rounded-xl transition-all border border-gray-200 shadow-sm font-medium text-sm"
               >
                 Import CSV
               </button>
               <button
                 onClick={handleAdd}
-                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md transition-colors"
+                className="flex-1 sm:flex-none inline-flex items-center justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2.5 rounded-xl transition-all shadow-md shadow-indigo-100 font-medium text-sm"
               >
                 + Adaugă Produs
               </button>
@@ -123,9 +126,12 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
       </div>
 
       {isFormOpen && (
-        <div className="mb-8 p-6 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
-          <h2 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
-            <Package className="mr-2 text-blue-600" />
+        <div className="mb-8 p-4 md:p-6 bg-white rounded-2xl border border-indigo-100 shadow-xl shadow-indigo-50/50 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-1 h-full bg-indigo-600"></div>
+          <h2 className="text-xl font-bold mb-6 text-gray-900 flex items-center">
+            <div className="w-8 h-8 bg-indigo-50 rounded-lg flex items-center justify-center mr-3">
+              <Package size={18} className="text-indigo-600" />
+            </div>
             {editingProduct ? `Editează: ${editingProduct.nume}` : 'Adaugă Produs Nou'}
           </h2>
           <ProductForm
@@ -144,103 +150,114 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
         </div>
       )}
 
-      <div className="bg-white shadow-sm border rounded-lg overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nume</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categorie</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stoc</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Preț</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Unitate</th>
-              <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">Acțiuni</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {products.length === 0 ? (
-              <tr>
-                <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
-                  Nu există produse în catalog.
-                </td>
+      <div className="bg-white shadow-sm border border-gray-200 rounded-2xl overflow-hidden">
+        <div className="overflow-x-auto scrollbar-thin scrollbar-thumb-gray-200 scrollbar-track-transparent">
+          <table className="min-w-full divide-y divide-gray-100">
+            <thead>
+              <tr className="bg-gray-50/50">
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Produs</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Categorie</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Stoc</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Preț</th>
+                <th className="px-6 py-4 text-left text-xs font-bold text-gray-400 uppercase tracking-widest">Unitate</th>
+                <th className="px-6 py-4 text-right text-xs font-bold text-gray-400 uppercase tracking-widest">Acțiuni</th>
               </tr>
-            ) : (
-              products.map((product) => (
-                <tr key={product.id} className={`hover:bg-gray-50 transition-colors ${!product.isEditable ? 'bg-gray-50/30' : ''}`}>
-                  <td className="px-6 py-4 whitespace-nowrap font-medium flex items-center">
-                    {product.nume}
-                    {!product.isEditable && (
-                      <span title="Editare restricționată (7+ zile)">
-                        <Lock size={14} className="ml-2 text-gray-400" />
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                    {product.categorie?.nume || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center space-x-2">
-                      <button
-                        onClick={() => {
-                          handleStockChange(product, -1);
-                        }}
-                        disabled={!product.isEditable}
-                        className={`w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-600 transition-colors ${
-                          !product.isEditable ? 'opacity-30 cursor-not-allowed' : 'hover:bg-blue-600 hover:text-white'
-                        }`}
-                        title={!product.isEditable ? "Fereastra de editare a expirat" : "Scade stoc"}
-                      >
-                        -
-                      </button>
-                      <span className={`font-bold min-w-[30px] text-center text-lg ${!product.isEditable ? 'text-gray-400' : 'text-gray-900'}`}>
-                        {product.stoc}
-                      </span>
-                      <button
-                        onClick={() => {
-                          handleStockChange(product, 1);
-                        }}
-                        disabled={!product.isEditable}
-                        className={`w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-600 transition-colors ${
-                          !product.isEditable ? 'opacity-30 cursor-not-allowed' : 'hover:bg-blue-600 hover:text-white'
-                        }`}
-                        title={!product.isEditable ? "Fereastra de editare a expirat" : "Adaugă stoc"}
-                      >
-                        +
-                      </button>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-600 font-medium">
-                    {(product.pret / 100).toFixed(2)} RON
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">
-                    {product.unitate?.simbol || '-'}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                    <button
-                      onClick={() => handleEdit(product)}
-                      disabled={!product.isEditable}
-                      className={`${
-                        !product.isEditable ? 'text-gray-300 cursor-not-allowed' : 'text-blue-600 hover:text-blue-900'
-                      } mr-4 px-3 py-1 border border-transparent hover:border-blue-200 rounded-md transition-all`}
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => {
-                        handleDelete(product.id);
-                      }}
-                      disabled={!product.isEditable}
-                      className={`${
-                        !product.isEditable ? 'text-gray-300 cursor-not-allowed' : 'text-red-600 hover:text-red-900'
-                      } px-3 py-1 border border-transparent hover:border-red-200 rounded-md transition-all`}
-                    >
-                      Șterge
-                    </button>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {products.length === 0 ? (
+                <tr>
+                  <td colSpan={6} className="px-6 py-16 text-center text-gray-400 italic">
+                    Nu există produse în catalog.
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
+              ) : (
+                products.map((product) => (
+                  <tr key={product.id} className={`hover:bg-indigo-50/30 transition-colors group ${!product.isEditable ? 'bg-gray-50/50' : ''}`}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 mr-3 group-hover:bg-indigo-100 group-hover:text-indigo-600 transition-colors">
+                          <Package size={16} />
+                        </div>
+                        <span className="font-semibold text-gray-900">{product.nume}</span>
+                        {!product.isEditable && (
+                          <span title="Editare restricționată (7+ zile)" className="ml-2 inline-flex items-center p-1 bg-amber-50 text-amber-600 rounded">
+                            <Lock size={12} />
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <span className="px-2.5 py-1 rounded-full bg-gray-100 text-gray-600 text-xs font-bold uppercase tracking-tight">
+                        {product.categorie?.nume || '-'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center gap-3">
+                        <button
+                          onClick={() => handleStockChange(product, -1)}
+                          disabled={!product.isEditable}
+                          className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all border ${
+                            !product.isEditable 
+                              ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed' 
+                              : 'bg-white text-gray-600 border-gray-200 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 shadow-sm active:scale-95'
+                          }`}
+                        >
+                          -
+                        </button>
+                        <span className={`font-black text-center text-lg min-w-[2.5rem] ${product.stoc < 5 ? 'text-red-600' : 'text-gray-900'}`}>
+                          {product.stoc}
+                        </span>
+                        <button
+                          onClick={() => handleStockChange(product, 1)}
+                          disabled={!product.isEditable}
+                          className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all border ${
+                            !product.isEditable 
+                              ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed' 
+                              : 'bg-white text-gray-600 border-gray-200 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 shadow-sm active:scale-95'
+                          }`}
+                        >
+                          +
+                        </button>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap font-bold text-gray-900">
+                      {(product.pret / 100).toLocaleString('ro-RO', { minimumFractionDigits: 2 })} <span className="text-[10px] text-gray-400 font-medium">RON</span>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 font-medium italic">
+                      {product.unitate?.simbol || '-'}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-right">
+                      <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleEdit(product)}
+                          disabled={!product.isEditable}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
+                            !product.isEditable 
+                              ? 'text-gray-300 cursor-not-allowed' 
+                              : 'text-indigo-600 hover:bg-indigo-50 active:scale-95'
+                          }`}
+                        >
+                          Editează
+                        </button>
+                        <button
+                          onClick={() => handleDelete(product.id)}
+                          disabled={!product.isEditable}
+                          className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
+                            !product.isEditable 
+                              ? 'text-gray-300 cursor-not-allowed' 
+                              : 'text-red-600 hover:bg-red-50 active:scale-95'
+                          }`}
+                        >
+                          Șterge
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

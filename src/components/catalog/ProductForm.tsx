@@ -2,6 +2,18 @@
 
 import { useState } from 'react';
 import { addProduct, updateProduct, createCategory } from '@/app/actions/products';
+import { 
+  Package, 
+  Tag, 
+  Hash, 
+  Coins, 
+  Info, 
+  Plus, 
+  X, 
+  Check,
+  Layers,
+  Box
+} from 'lucide-react';
 
 interface ProductFormProps {
   initialData?: any;
@@ -24,6 +36,7 @@ export default function ProductForm({ initialData, categories, units, onSuccess,
   const [isAddingCategory, setIsAddingCategory] = useState(false);
   const [newCategoryName, setNewCategoryName] = useState('');
   const [localCategories, setLocalCategories] = useState(categories);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) return;
@@ -41,6 +54,7 @@ export default function ProductForm({ initialData, categories, units, onSuccess,
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setIsSubmitting(true);
     
     const { id, ...dataToSend } = {
       ...formData,
@@ -61,125 +75,194 @@ export default function ProductForm({ initialData, categories, units, onSuccess,
       onSuccess();
     } else {
       alert(result.error);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 bg-gray-50 p-6 rounded-lg border">
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Nume Produs *</label>
-        <input
-          type="text"
-          required
-          value={formData.nume}
-          onChange={(e) => setFormData({ ...formData, nume: e.target.value })}
-          className="mt-1 block w-full border rounded-md px-3 py-2"
-        />
-      </div>
-      
-      <div>
-        <label className="block text-sm font-medium text-gray-700">Descriere</label>
-        <textarea
-          value={formData.descriere}
-          onChange={(e) => setFormData({ ...formData, descriere: e.target.value })}
-          className="mt-1 block w-full border rounded-md px-3 py-2"
-        />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        {/* Secțiunea: Informații Generale */}
+        <div className="space-y-4 md:col-span-2">
+           <div className="flex items-center gap-2 mb-2 text-indigo-600">
+              <Info size={18} />
+              <h3 className="text-sm font-bold uppercase tracking-wider">Informații Generale</h3>
+           </div>
+           
+           <div className="group">
+             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Nume Produs *</label>
+             <div className="relative">
+               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-indigo-600 transition-colors">
+                 <Package size={18} />
+               </div>
+               <input
+                 type="text"
+                 required
+                 placeholder="ex: Șuruburi 10mm"
+                 value={formData.nume}
+                 onChange={(e) => setFormData({ ...formData, nume: e.target.value })}
+                 className="block w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-600 focus:bg-white sm:text-sm transition-all font-medium"
+               />
+             </div>
+           </div>
+
+           <div className="group">
+             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Descriere Detaliată</label>
+             <textarea
+               rows={3}
+               placeholder="Adaugă detalii despre produs..."
+               value={formData.descriere}
+               onChange={(e) => setFormData({ ...formData, descriere: e.target.value })}
+               className="block w-full px-4 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-600 focus:bg-white sm:text-sm transition-all font-medium"
+             />
+           </div>
+        </div>
+
+        {/* Secțiunea: Valori și Stoc */}
+        <div className="space-y-4">
+           <div className="flex items-center gap-2 mb-2 text-emerald-600">
+              <Coins size={18} />
+              <h3 className="text-sm font-bold uppercase tracking-wider">Preț și Stoc</h3>
+           </div>
+
+           <div className="group">
+             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Preț (RON) *</label>
+             <div className="relative">
+               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-emerald-600 transition-colors">
+                 <Tag size={18} />
+               </div>
+               <input
+                 type="number"
+                 step="0.01"
+                 required
+                 value={formData.pret}
+                 onChange={(e) => setFormData({ ...formData, pret: e.target.value })}
+                 className="block w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-500 focus:bg-white sm:text-sm transition-all font-medium"
+               />
+             </div>
+           </div>
+
+           <div className="group">
+             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Stoc Inițial</label>
+             <div className="relative">
+               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-emerald-600 transition-colors">
+                 <Hash size={18} />
+               </div>
+               <input
+                 type="number"
+                 value={formData.stoc}
+                 onChange={(e) => setFormData({ ...formData, stoc: parseInt(e.target.value) || 0 })}
+                 className="block w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-500 focus:bg-white sm:text-sm transition-all font-medium"
+               />
+             </div>
+           </div>
+        </div>
+
+        {/* Secțiunea: Clasificare */}
+        <div className="space-y-4">
+           <div className="flex items-center gap-2 mb-2 text-purple-600">
+              <Layers size={18} />
+              <h3 className="text-sm font-bold uppercase tracking-wider">Clasificare</h3>
+           </div>
+
+           <div className="group">
+             <div className="flex justify-between items-center mb-1.5 px-1">
+               <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Categorie</label>
+               <button
+                 type="button"
+                 onClick={() => setIsAddingCategory(!isAddingCategory)}
+                 className="text-[10px] font-black uppercase text-indigo-600 hover:text-indigo-700 transition-colors flex items-center gap-1"
+               >
+                 {isAddingCategory ? <><X size={10} /> Renunță</> : <><Plus size={10} /> Nouă</>}
+               </button>
+             </div>
+             
+             {isAddingCategory ? (
+               <div className="flex gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                 <input
+                   type="text"
+                   autoFocus
+                   placeholder="Nume..."
+                   value={newCategoryName}
+                   onChange={(e) => setNewCategoryName(e.target.value)}
+                   className="flex-1 px-3 py-2 bg-white border border-indigo-200 rounded-xl text-sm focus:ring-4 focus:ring-indigo-50 focus:outline-none transition-all"
+                 />
+                 <button
+                   type="button"
+                   onClick={handleCreateCategory}
+                   className="bg-indigo-600 text-white p-2.5 rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-100 active:scale-95 transition-all"
+                 >
+                   <Check size={18} />
+                 </button>
+               </div>
+             ) : (
+               <div className="relative">
+                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                   <Layers size={18} />
+                 </div>
+                 <select
+                   value={formData.categorie_id}
+                   onChange={(e) => setFormData({ ...formData, categorie_id: e.target.value })}
+                   className="block w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-gray-900 appearance-none focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-500 focus:bg-white sm:text-sm transition-all font-medium cursor-pointer"
+                 >
+                   <option value="">Alege o categorie</option>
+                   {localCategories.map((cat) => (
+                     <option key={cat.id} value={cat.id}>{cat.nume}</option>
+                   ))}
+                 </select>
+                 <div className="absolute inset-y-0 right-0 pr-3 flex items-center pointer-events-none text-gray-400">
+                   <Plus size={14} className="opacity-50" />
+                 </div>
+               </div>
+             )}
+           </div>
+
+           <div className="group">
+             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Unitate de Măsură</label>
+             <div className="relative">
+               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
+                 <Box size={18} />
+               </div>
+               <select
+                 value={formData.unitate_id}
+                 onChange={(e) => setFormData({ ...formData, unitate_id: e.target.value })}
+                 className="block w-full pl-10 pr-10 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-gray-900 appearance-none focus:outline-none focus:ring-4 focus:ring-purple-50 focus:border-purple-500 focus:bg-white sm:text-sm transition-all font-medium cursor-pointer"
+               >
+                 <option value="">Alege o unitate</option>
+                 {units.map((unit) => (
+                   <option key={unit.id} value={unit.id}>{unit.simbol} ({unit.nume})</option>
+                 ))}
+               </select>
+             </div>
+           </div>
+        </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Preț (RON) *</label>
-          <input
-            type="number"
-            step="0.01"
-            required
-            value={formData.pret}
-            onChange={(e) => setFormData({ ...formData, pret: e.target.value })}
-            className="mt-1 block w-full border rounded-md px-3 py-2"
-          />
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Stoc Inițial</label>
-          <input
-            type="number"
-            value={formData.stoc}
-            onChange={(e) => setFormData({ ...formData, stoc: parseInt(e.target.value) || 0 })}
-            className="mt-1 block w-full border rounded-md px-3 py-2"
-          />
-        </div>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-        <div>
-          <div className="flex justify-between items-center mb-1">
-            <label className="block text-sm font-medium text-gray-700">Categorie</label>
-            <button
-              type="button"
-              onClick={() => setIsAddingCategory(!isAddingCategory)}
-              className="text-xs text-blue-600 hover:text-blue-800 font-semibold"
-            >
-              {isAddingCategory ? 'Anulează' : '+ Nouă'}
-            </button>
-          </div>
-          
-          {isAddingCategory ? (
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                placeholder="Nume categorie"
-                value={newCategoryName}
-                onChange={(e) => setNewCategoryName(e.target.value)}
-                className="flex-1 border rounded-md px-3 py-1 text-sm"
-              />
-              <button
-                type="button"
-                onClick={handleCreateCategory}
-                className="bg-green-600 text-white px-3 py-1 rounded-md text-sm hover:bg-green-700"
-              >
-                OK
-              </button>
-            </div>
-          ) : (
-            <select
-              value={formData.categorie_id}
-              onChange={(e) => setFormData({ ...formData, categorie_id: e.target.value })}
-              className="mt-1 block w-full border rounded-md px-3 py-2 bg-white"
-            >
-              <option value="">Alege o categorie</option>
-              {localCategories.map((cat) => (
-                <option key={cat.id} value={cat.id}>{cat.nume}</option>
-              ))}
-            </select>
-          )}
-        </div>
-        <div>
-          <label className="block text-sm font-medium text-gray-700">Unitate</label>
-          <select
-            value={formData.unitate_id}
-            onChange={(e) => setFormData({ ...formData, unitate_id: e.target.value })}
-            className="mt-1 block w-full border rounded-md px-3 py-2 bg-white"
-          >
-            <option value="">Alege o unitate</option>
-            {units.map((unit) => (
-              <option key={unit.id} value={unit.id}>{unit.simbol}</option>
-            ))}
-          </select>
-        </div>
-      </div>
-
-      <div className="flex justify-end space-x-3 pt-4">
+      {/* Butoane Acțiune */}
+      <div className="flex flex-col-reverse sm:flex-row justify-end items-center gap-3 pt-6 border-t border-gray-100 mt-6">
         <button
           type="button"
           onClick={onCancel}
-          className="px-4 py-2 border rounded-md text-gray-700 hover:bg-gray-100 transition-colors"
+          className="w-full sm:w-auto px-6 py-3 border border-gray-200 rounded-2xl text-gray-600 font-bold hover:bg-gray-50 transition-all active:scale-95"
         >
-          Anulează
+          Renunță
         </button>
         <button
           type="submit"
-          className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+          disabled={isSubmitting}
+          className="w-full sm:w-auto px-10 py-3 bg-indigo-600 text-white rounded-2xl font-black hover:bg-indigo-700 shadow-xl shadow-indigo-100 transition-all active:scale-95 flex items-center justify-center gap-2"
         >
-          Salvează Produs
+          {isSubmitting ? (
+            <>
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <span>Se salvează...</span>
+            </>
+          ) : (
+            <>
+              <Check size={18} />
+              <span>Salvează Produs</span>
+            </>
+          )}
         </button>
       </div>
     </form>
