@@ -23,8 +23,9 @@ export async function signUpAction(formData: FormData) {
 
   const supabase = await createClient();
 
-  // 1. Inregistram utilizatorul in Supabase Auth
-  const { data: authData, error: authError } = await supabase.auth.signUp({
+  // Inregistram utilizatorul in Supabase Auth
+  // Trigger-ul SQL 'on_auth_user_created' va crea automat profilul in tabelul 'utilizatori'
+  const { error } = await supabase.auth.signUp({
     email,
     password,
     options: {
@@ -32,28 +33,12 @@ export async function signUpAction(formData: FormData) {
     }
   });
 
-  if (authError || !authData.user) {
-    console.error('Sign up error:', authError?.message);
-    return { error: authError?.message || 'Eroare la crearea contului.' };
+  if (error) {
+    console.error('Sign up error:', error.message);
+    return { error: error.message };
   }
 
-  // 2. Determinăm rolul: primul user = ADMIN, restul = ANGAJAT
-  const [userCount] = await db.select({ value: count() }).from(utilizatori);
-  const role = userCount.value === 0 ? 'ADMIN' : 'ANGAJAT';
-
-  // 3. Salvăm profilul în tabelul nostru 'utilizatori'
-  try {
-    await db.insert(utilizatori).values({
-      id: authData.user.id,
-      email,
-      nume,
-      rol: role as any,
-    });
-  } catch (dbError) {
-    console.error('Error creating user profile in DB:', dbError);
-    return { error: 'Contul a fost creat în Auth, dar a apărut o eroare la profil.' };
-  }
-
+  // Redirect la dashboard - sesiunea va fi activa automat
   redirect('/dashboard');
 }
 
