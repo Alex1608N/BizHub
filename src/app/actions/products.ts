@@ -2,10 +2,29 @@
 
 import { db } from '@/db/index';
 import { produse, categorii, unitati, auditLogs } from '@/db/schema';
-import { eq, inArray, and } from 'drizzle-orm';
+import { eq, inArray, and, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { auditLog, canUserEditProduct } from '@/lib/audit';
 import { getSession } from '@/lib/auth';
+
+export async function getDashboardStats() {
+  try {
+    const [stats] = await db.select({
+      totalValue: sql<number>`SUM(${produse.stoc} * ${produse.pret}) / 100`,
+      totalProducts: sql<number>`COUNT(${produse.id})`,
+      lowStockCount: sql<number>`COUNT(CASE WHEN ${produse.stoc} < 5 THEN 1 END)`
+    }).from(produse);
+
+    return {
+      totalValue: Number(stats.totalValue || 0),
+      totalProducts: Number(stats.totalProducts || 0),
+      lowStockCount: Number(stats.lowStockCount || 0)
+    };
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    return { totalValue: 0, totalProducts: 0, lowStockCount: 0 };
+  }
+}
 
 export async function getProducts() {
   const session = await getSession();
@@ -17,6 +36,7 @@ export async function getProducts() {
     stoc: produse.stoc,
     categorie_id: produse.categorie_id,
     unitate_id: produse.unitate_id,
+    created_at: produse.created_at,
     categorie: {
       id: categorii.id,
       nume: categorii.nume,
@@ -30,41 +50,21 @@ export async function getProducts() {
   .leftJoin(categorii, eq(produse.categorie_id, categorii.id))
   .leftJoin(unitati, eq(produse.unitate_id, unitati.id));
 
-  const products = results;
-
   if (!session) {
-    return products.map((p: any) => ({ ...p, isEditable: false }));
+    return results.map((p: any) => ({ ...p, isEditable: false }));
   }
 
   const userRole = session.user.rol;
-  // Pentru ADMIN si MANAGER nu avem nevoie de audit logs, suntem direct editabili
   if (userRole === 'ADMIN' || userRole === 'MANAGER') {
-    return products.map((p: any) => ({ ...p, isEditable: true }));
+    return results.map((p: any) => ({ ...p, isEditable: true }));
   }
-
-  // Doar pentru angajati si altii verificam istoricul
-  const allCreateLogs = await db.query.auditLogs.findMany({
-    where: and(
-      eq(auditLogs.actiune, 'CREATE'),
-      eq(auditLogs.tabel, 'produse')
-    )
-  });
 
   const sapteZileInMs = 7 * 24 * 60 * 60 * 1000;
   const acum = Date.now();
 
-  const creationDatesMap = new Map<number, number>();
-  allCreateLogs.forEach((log: any) => {
-    try {
-      const data = JSON.parse(log.date_noi || '{}');
-      if (data.id) creationDatesMap.set(data.id, new Date(log.timestamp).getTime());
-    } catch (e) {}
-  });
-
-  return products.map((p: any) => {
-    const dataCreare = creationDatesMap.get(p.id);
-    // Dacă nu avem data creării (produs importat), permitem editarea
-    const isWithinWindow = dataCreare ? (acum - dataCreare) < sapteZileInMs : true;
+  return results.map((p: any) => {
+    const dataCreare = p.created_at ? new Date(p.created_at).getTime() : acum;
+    const isWithinWindow = (acum - dataCreare) < sapteZileInMs;
     return { ...p, isEditable: isWithinWindow };
   });
 }
@@ -249,23 +249,26 @@ export async function recordStockMovement(id: number, quantityChange: number) {
       return { success: false, error: 'Fereastra de editare a expirat.' };
     }
 
-    const oldProduct = await db.query.produse.findFirst({ where: eq(produse.id, id) });
-    if (!oldProduct) return { success: false, error: 'Produsul nu a fost gasit.' };
-
-    const newStoc = (oldProduct.stoc || 0) + quantityChange;
-    if (newStoc < 0) return { success: false, error: 'Stocul nu poate fi negativ.' };
-
+    // Facem update direct cu verificare de stoc negativ într-o singură interogare (atomic)
     const [updatedProduct] = await db.update(produse)
-      .set({ stoc: newStoc })
-      .where(eq(produse.id, id))
+      .set({ 
+        stoc: sql`${produse.stoc} + ${quantityChange}` 
+      })
+      .where(and(
+        eq(produse.id, id),
+        sql`${produse.stoc} + ${quantityChange} >= 0` // Prevenim stoc negativ la nivel de SQL
+      ))
       .returning();
+
+    if (!updatedProduct) {
+      return { success: false, error: 'Stocul nu poate fi negativ sau produsul nu exista.' };
+    }
 
     await auditLog(db, {
       user_id: session.user.id,
       actiune: 'UPDATE',
       tabel: 'produse',
-      date_vechi: oldProduct,
-      date_noi: { ...updatedProduct, nume: oldProduct.nume }, // Fortam includerea numelui pentru Dashboard
+      date_noi: updatedProduct,
     });
 
     revalidatePath('/catalog');
@@ -277,13 +280,27 @@ export async function recordStockMovement(id: number, quantityChange: number) {
   }
 }
 
-export async function getStockValue() {
+export async function getLowStockProducts(limit = 10) {
   try {
-    const allProducts = await db.query.produse.findMany();
-    const totalValue = allProducts.reduce((sum: number, p: any) => sum + (p.stoc * p.pret), 0);
-    return totalValue / 100; // Returnam in unitati monetare (RON)
+    return await db.select({
+      id: produse.id,
+      nume: produse.nume,
+      stoc: produse.stoc,
+      unitate: {
+        simbol: unitati.simbol
+      }
+    })
+    .from(produse)
+    .leftJoin(unitati, eq(produse.unitate_id, unitati.id))
+    .where(sql`${produse.stoc} < 5`)
+    .limit(limit);
   } catch (error) {
-    console.error('Error calculating stock value:', error);
-    return 0;
+    console.error('Error fetching low stock products:', error);
+    return [];
   }
+}
+
+export async function getStockValue() {
+  const stats = await getDashboardStats();
+  return stats.totalValue;
 }

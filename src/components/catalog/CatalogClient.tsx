@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import ProductForm from './ProductForm';
 import { deleteProduct, recordStockMovement, importProducts } from '@/app/actions/products';
 import Papa from 'papaparse';
-import { Lock } from 'lucide-react';
+import { Lock, Package } from 'lucide-react';
 
 interface CatalogClientProps {
   initialProducts: any[];
@@ -13,10 +13,15 @@ interface CatalogClientProps {
 }
 
 export default function CatalogClient({ initialProducts, categories, units }: CatalogClientProps) {
-  // ... restul codului rămâne neschimbat până la return ...
+  const [products, setProducts] = useState(initialProducts);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Sincronizăm produsele dacă vin date noi de la server (ex: după un revalidatePath)
+  useEffect(() => {
+    setProducts(initialProducts);
+  }, [initialProducts]);
 
   const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -38,20 +43,41 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
   };
 
   const handleStockChange = async (product: any, change: number) => {
-    if (product.stoc + change < 0) {
+    const currentStoc = product.stoc;
+    const newStoc = currentStoc + change;
+
+    if (newStoc < 0) {
       alert("Stocul nu poate deveni negativ!");
       return;
     }
+
+    // --- OPTIMISTIC UPDATE ---
+    setProducts(prev => prev.map(p => 
+      p.id === product.id ? { ...p, stoc: newStoc } : p
+    ));
+
     const result = await recordStockMovement(product.id, change);
+    
     if (!result.success) {
+      // --- ROLLBACK ---
+      setProducts(prev => prev.map(p => 
+        p.id === product.id ? { ...p, stoc: currentStoc } : p
+      ));
       alert(result.error);
     }
   };
 
   const handleDelete = async (id: number) => {
     if (confirm('Ești sigur că vrei să ștergi acest produs?')) {
+      const originalProducts = [...products];
+      // Optimistic delete
+      setProducts(prev => prev.filter(p => p.id !== id));
+      
       const result = await deleteProduct(id);
-      if (!result.success) alert(result.error);
+      if (!result.success) {
+        setProducts(originalProducts);
+        alert(result.error);
+      }
     }
   };
 
@@ -97,8 +123,9 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
       </div>
 
       {isFormOpen && (
-        <div className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">
+        <div className="mb-8 p-6 bg-gray-50 rounded-xl border-2 border-dashed border-gray-200">
+          <h2 className="text-xl font-semibold mb-4 text-gray-800 flex items-center">
+            <Package className="mr-2 text-blue-600" />
             {editingProduct ? `Editează: ${editingProduct.nume}` : 'Adaugă Produs Nou'}
           </h2>
           <ProductForm
@@ -130,14 +157,14 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {initialProducts.length === 0 ? (
+            {products.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-6 py-10 text-center text-gray-500">
                   Nu există produse în catalog.
                 </td>
               </tr>
             ) : (
-              initialProducts.map((product) => (
+              products.map((product) => (
                 <tr key={product.id} className={`hover:bg-gray-50 transition-colors ${!product.isEditable ? 'bg-gray-50/30' : ''}`}>
                   <td className="px-6 py-4 whitespace-nowrap font-medium flex items-center">
                     {product.nume}
@@ -157,14 +184,14 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
                           handleStockChange(product, -1);
                         }}
                         disabled={!product.isEditable}
-                        className={`w-6 h-6 flex items-center justify-center bg-gray-100 rounded-full text-gray-600 transition-colors ${
-                          !product.isEditable ? 'opacity-30 cursor-not-allowed' : 'hover:bg-gray-200'
+                        className={`w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-600 transition-colors ${
+                          !product.isEditable ? 'opacity-30 cursor-not-allowed' : 'hover:bg-blue-600 hover:text-white'
                         }`}
                         title={!product.isEditable ? "Fereastra de editare a expirat" : "Scade stoc"}
                       >
                         -
                       </button>
-                      <span className={`font-medium min-w-[20px] text-center ${!product.isEditable ? 'text-gray-400' : 'text-gray-900'}`}>
+                      <span className={`font-bold min-w-[30px] text-center text-lg ${!product.isEditable ? 'text-gray-400' : 'text-gray-900'}`}>
                         {product.stoc}
                       </span>
                       <button
@@ -172,8 +199,8 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
                           handleStockChange(product, 1);
                         }}
                         disabled={!product.isEditable}
-                        className={`w-6 h-6 flex items-center justify-center bg-gray-100 rounded-full text-gray-600 transition-colors ${
-                          !product.isEditable ? 'opacity-30 cursor-not-allowed' : 'hover:bg-gray-200'
+                        className={`w-8 h-8 flex items-center justify-center bg-gray-100 rounded-full text-gray-600 transition-colors ${
+                          !product.isEditable ? 'opacity-30 cursor-not-allowed' : 'hover:bg-blue-600 hover:text-white'
                         }`}
                         title={!product.isEditable ? "Fereastra de editare a expirat" : "Adaugă stoc"}
                       >
@@ -181,7 +208,7 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
                       </button>
                     </div>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">
+                  <td className="px-6 py-4 whitespace-nowrap text-gray-600 font-medium">
                     {(product.pret / 100).toFixed(2)} RON
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-gray-600">
@@ -193,7 +220,7 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
                       disabled={!product.isEditable}
                       className={`${
                         !product.isEditable ? 'text-gray-300 cursor-not-allowed' : 'text-blue-600 hover:text-blue-900'
-                      } mr-4`}
+                      } mr-4 px-3 py-1 border border-transparent hover:border-blue-200 rounded-md transition-all`}
                     >
                       Edit
                     </button>
@@ -204,7 +231,7 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
                       disabled={!product.isEditable}
                       className={`${
                         !product.isEditable ? 'text-gray-300 cursor-not-allowed' : 'text-red-600 hover:text-red-900'
-                      }`}
+                      } px-3 py-1 border border-transparent hover:border-red-200 rounded-md transition-all`}
                     >
                       Șterge
                     </button>

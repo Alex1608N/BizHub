@@ -41,26 +41,16 @@ export async function canUserEditProduct(productId: number, userRole: string) {
     return true;
   }
 
-  // Căutăm log-ul de tip CREATE pentru acest produs
-  // NOTĂ: Deoarece ID-ul este în JSON-ul stocat în date_noi, 
-  // căutăm log-ul care conține ID-ul produsului în formatul corect.
-  const createLog = await db.query.auditLogs.findFirst({
-    where: (logs: any, helpers: any) => helpers.and(
-      helpers.eq(logs.actiune, 'CREATE'),
-      helpers.eq(logs.tabel, 'produse'),
-      sql`${logs.date_noi} LIKE ${'%\"id\":' + productId + ',%'}`
-    ),
-    orderBy: (logs: any, helpers: any) => [helpers.asc(logs.id)], // Primul log de creare
+  // Citim data creării direct din tabelul de produse (foarte rapid)
+  const product = await db.query.produse.findFirst({
+    where: eq(produse.id, productId),
+    columns: { created_at: true }
   });
 
-  if (!createLog) {
-    // Dacă nu găsim log-ul de creare (produse vechi sau importate fără audit), 
-    // permitem editarea pentru a nu bloca activitatea pe produsele existente.
-    return true;
-  }
+  if (!product) return false;
 
   const sapteZileInMs = 7 * 24 * 60 * 60 * 1000;
-  const dataCreare = new Date(createLog.timestamp).getTime();
+  const dataCreare = new Date(product.created_at).getTime();
   const acum = Date.now();
 
   return (acum - dataCreare) < sapteZileInMs;

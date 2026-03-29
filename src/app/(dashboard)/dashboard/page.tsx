@@ -1,41 +1,39 @@
 import React from "react";
-import { getStockValue, getProducts } from "@/app/actions/products";
+import { getDashboardStats, getLowStockProducts } from "@/app/actions/products";
 import { getDailyAuditDigest, getAuditLogs } from "@/app/actions/audit";
 import { getSession } from "@/lib/auth";
 import { TrendingUp, Package, Store, AlertTriangle, Wallet, History, User, Clock } from "lucide-react";
 
 export default async function DashboardPage() {
-  const [session, stockValue, products, dailyDigest, recentLogs] = await Promise.all([
+  const [session, statsData, lowStockProducts, dailyDigest, recentLogs] = await Promise.all([
     getSession(),
-    getStockValue(),
-    getProducts(),
+    getDashboardStats(),
+    getLowStockProducts(),
     getDailyAuditDigest(),
     getAuditLogs()
   ]);
   
-  const lowStockCount = products.filter((p: any) => p.stoc < 5).length;
-
   const stats = [
     { 
       label: "Valoare Stoc", 
-      value: `${stockValue.toLocaleString('ro-RO', { minimumFractionDigits: 2 })} RON`, 
+      value: `${statsData.totalValue.toLocaleString('ro-RO', { minimumFractionDigits: 2 })} RON`, 
       icon: Wallet,
       color: "text-blue-600",
       bg: "bg-blue-50"
     },
     { 
       label: "Produse in Catalog", 
-      value: products.length.toString(), 
+      value: statsData.totalProducts.toString(), 
       icon: Package,
       color: "text-indigo-600",
       bg: "bg-indigo-50"
     },
     { 
       label: "Alerte Stoc", 
-      value: lowStockCount.toString(), 
+      value: statsData.lowStockCount.toString(), 
       icon: AlertTriangle,
-      color: lowStockCount > 0 ? "text-red-600" : "text-emerald-600",
-      bg: lowStockCount > 0 ? "bg-red-50" : "bg-emerald-50"
+      color: statsData.lowStockCount > 0 ? "text-red-600" : "text-emerald-600",
+      bg: statsData.lowStockCount > 0 ? "bg-red-50" : "bg-emerald-50"
     },
     { 
       label: "Unitati Active", 
@@ -99,7 +97,7 @@ export default async function DashboardPage() {
               </span>
             </div>
 
-            {products.filter((p: any) => p.stoc < 5).length > 0 ? (
+            {lowStockProducts.length > 0 ? (
               <div className="flex-1 overflow-auto">
                 <table className="w-full text-left">
                   <thead>
@@ -109,7 +107,7 @@ export default async function DashboardPage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-50 text-sm">
-                    {products.filter((p: any) => p.stoc < 5).map((p: any) => (
+                    {lowStockProducts.map((p: any) => (
                       <tr key={p.id} className="group hover:bg-gray-50 transition-colors">
                         <td className="py-4 font-semibold text-gray-700">{p.nume}</td>
                         <td className="py-4 text-right">

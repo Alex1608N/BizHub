@@ -55,6 +55,7 @@ export const produse = pgTable('produse', {
   stoc: integer('stoc').notNull().default(0),
   categorie_id: integer('categorie_id').references(() => categorii.id),
   unitate_id: integer('unitate_id').references(() => unitati.id),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
 export const produseRelations = relations(produse, ({ one }) => ({
