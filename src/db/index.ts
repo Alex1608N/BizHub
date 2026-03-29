@@ -9,17 +9,19 @@ if (!connectionString) {
 }
 
 // Prevent multiple connections to the database in development and production
+const globalForDb = global as unknown as { db: any };
+
 let client: any;
 let db: any;
 
-if (!global.db) {
+if (!globalForDb.db) {
   client = postgres(connectionString, { prepare: false });
   db = drizzle(client, { schema });
   if (process.env.NODE_ENV !== 'production') {
-    global.db = db;
+    globalForDb.db = db;
   }
 } else {
-  db = global.db;
+  db = globalForDb.db;
 }
 
 export { db };
