@@ -23,8 +23,7 @@ export async function signUpAction(formData: FormData) {
 
   const supabase = await createClient();
 
-  // Inregistram utilizatorul in Supabase Auth
-  // Trigger-ul SQL 'on_auth_user_created' va crea automat profilul in tabelul 'utilizatori'
+  // Inregistram utilizatorul in Supabase Auth (Trigger-ul SQL va face restul)
   const { error } = await supabase.auth.signUp({
     email,
     password,
