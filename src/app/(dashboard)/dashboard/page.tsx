@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { StatsCards, StatsCardsSkeleton } from "./components/StatsCards";
 import { LowStockAlerts, LowStockSkeleton } from "./components/LowStockAlerts";
 import { DailyDigest, AuditHistory, AuditSkeleton } from "./components/AuditHistory";
+import AIInsights, { AIInsightsSkeleton } from "@/components/dashboard/AIInsights";
 
 export default async function DashboardPage() {
   const session = await getSession();
@@ -25,6 +26,11 @@ export default async function DashboardPage() {
       {/* Stats Grid - Streamed */}
       <Suspense fallback={<StatsCardsSkeleton />}>
         <StatsCards />
+      </Suspense>
+
+      {/* AI Insights Section */}
+      <Suspense fallback={<AIInsightsSkeleton />}>
+        <AIInsights />
       </Suspense>
 
       {/* Main Sections - Streamed separately */}

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { addProduct, updateProduct, createCategory } from '@/app/actions/products';
+import { generateProductDescription } from '@/app/actions/ai';
 import { 
   Package, 
   Tag, 
@@ -12,7 +13,8 @@ import {
   X, 
   Check,
   Layers,
-  Box
+  Box,
+  Sparkles
 } from 'lucide-react';
 
 interface ProductFormProps {
@@ -37,6 +39,26 @@ export default function ProductForm({ initialData, categories, units, onSuccess,
   const [newCategoryName, setNewCategoryName] = useState('');
   const [localCategories, setLocalCategories] = useState(categories);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false);
+
+  const handleGenerateDescription = async () => {
+    if (!formData.nume) {
+      alert("Te rugăm să introduci numele produsului mai întâi.");
+      return;
+    }
+
+    setIsGeneratingDescription(true);
+    try {
+      const category = localCategories.find(c => c.id.toString() === formData.categorie_id.toString());
+      const description = await generateProductDescription(formData.nume, category?.nume);
+      setFormData(prev => ({ ...prev, descriere: description }));
+    } catch (error) {
+      console.error(error);
+      alert("Nu am putut genera descrierea.");
+    } finally {
+      setIsGeneratingDescription(false);
+    }
+  };
 
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) return;
@@ -107,7 +129,21 @@ export default function ProductForm({ initialData, categories, units, onSuccess,
            </div>
 
            <div className="group">
-             <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest mb-1.5 ml-1">Descriere Detaliată</label>
+             <div className="flex justify-between items-center mb-1.5 px-1">
+               <label className="block text-xs font-bold text-gray-400 uppercase tracking-widest">Descriere Detaliată</label>
+               <button
+                 type="button"
+                 onClick={handleGenerateDescription}
+                 disabled={isGeneratingDescription || !formData.nume}
+                 className="text-[10px] font-black uppercase text-indigo-600 hover:text-indigo-700 disabled:text-gray-300 transition-colors flex items-center gap-1.5"
+               >
+                 {isGeneratingDescription ? (
+                   <><div className="w-3 h-3 border-2 border-indigo-600/30 border-t-indigo-600 rounded-full animate-spin" /> Se generează...</>
+                 ) : (
+                   <><Sparkles size={12} className="text-indigo-500" /> Generează cu AI</>
+                 )}
+               </button>
+             </div>
              <textarea
                rows={3}
                placeholder="Adaugă detalii despre produs..."
