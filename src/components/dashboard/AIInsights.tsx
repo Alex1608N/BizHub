@@ -4,8 +4,15 @@ import { getLowStockProducts, getProducts } from "@/app/actions/products";
 import { getAuditLogs } from "@/app/actions/audit";
 import { getInventoryInsights } from "@/app/actions/ai";
 
+type LowStockProduct = {
+  id: number;
+  nume: string;
+  stoc: number;
+  unitate?: { simbol: string } | null;
+};
+
 export default async function AIInsights() {
-  const lowStockProducts = await getLowStockProducts(5);
+  const lowStockProducts: LowStockProduct[] = await getLowStockProducts(5);
   const allProducts = await getProducts();
   const auditLogs = await getAuditLogs();
 
