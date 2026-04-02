@@ -8,7 +8,7 @@ console.log("Gemini key length:", process.env.GOOGLE_GENERATIVE_AI_API_KEY?.leng
 
 const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY);
 
-export const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+export const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
 export async function generateContent(prompt: string) {
   try {
