@@ -219,10 +219,14 @@ export default function UsersClient({ initialUsers, initialCompanies, userRole }
                   <div className="w-8 h-8 rounded-full border-4 border-white bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600">M</div>
                   <div className="w-8 h-8 rounded-full border-4 border-white bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-400">+</div>
                 </div>
-                <button className="text-indigo-600 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 hover:gap-2 transition-all">
+                <a 
+                  href={`/dashboard?companyId=${company.id}`}
+                  className="text-indigo-600 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 hover:gap-2 transition-all cursor-pointer"
+                >
                   Acces Panou <ArrowRight size={14} />
-                </button>
+                </a>
               </div>
+
             </div>
           ))}
         </div>

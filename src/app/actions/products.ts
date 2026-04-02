@@ -2,23 +2,47 @@
 
 import { db } from '@/db/index';
 import { produse, categorii, unitati, auditLogs } from '@/db/schema';
-import { eq, inArray, and, sql } from 'drizzle-orm';
+import { eq, and, sql, desc } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { auditLog, canUserEditProduct } from '@/lib/audit';
 import { getSession } from '@/lib/auth';
 
-export async function getDashboardStats() {
+/**
+ * Helper pentru a obține compania activă.
+ * Dacă ești ADMIN și ai companyId în sesiune/context (viitor) sau ești MANAGER la firma ta.
+ */
+async function getActiveCompanyId(overrideId?: number) {
+  const session = await getSession();
+  if (!session) return null;
+
+  // Dacă Adminul a "intrat" într-o firmă (pe viitor putem salva asta în sesiune, 
+  // momentan filtrăm în dashboard prin query params, dar acțiunile de scriere 
+  // trebuie să știe unde scriu).
+  if (overrideId && session.user.rol === 'ADMIN') return overrideId;
+  
+  return session.user.companie_id;
+}
+
+export async function getDashboardStats(companyId?: number) {
+  const session = await getSession();
+  if (!session) return { totalValue: 0, totalProducts: 0, lowStockCount: 0 };
+
+  const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
+
   try {
+    const filters = targetId ? eq(produse.companie_id, targetId) : undefined;
+
     const [stats] = await db.select({
       totalValue: sql<number>`SUM(${produse.stoc} * ${produse.pret}) / 100`,
       totalProducts: sql<number>`COUNT(${produse.id})`,
       lowStockCount: sql<number>`COUNT(CASE WHEN ${produse.stoc} < 5 THEN 1 END)`
-    }).from(produse);
+    }).from(produse)
+      .where(filters);
 
     return {
-      totalValue: Number(stats.totalValue || 0),
-      totalProducts: Number(stats.totalProducts || 0),
-      lowStockCount: Number(stats.lowStockCount || 0)
+      totalValue: Number(stats?.totalValue || 0),
+      totalProducts: Number(stats?.totalProducts || 0),
+      lowStockCount: Number(stats?.lowStockCount || 0)
     };
   } catch (error) {
     console.error('Error fetching dashboard stats:', error);
@@ -26,9 +50,15 @@ export async function getDashboardStats() {
   }
 }
 
-export async function getProducts() {
+export async function getProducts(companyId?: number) {
   const session = await getSession();
-  const results = await db.select({
+  if (!session) return [];
+
+  // Filtrare inteligentă: 
+  // 1. Dacă ești Admin și ai companyId -> vezi acea firmă
+  // 2. Dacă ești Admin și NU ai companyId -> vezi tot (global)
+  // 3. Dacă ești alt rol -> vezi doar firma ta
+  let query = db.select({
     id: produse.id,
     nume: produse.nume,
     descriere: produse.descriere,
@@ -36,236 +66,114 @@ export async function getProducts() {
     stoc: produse.stoc,
     categorie_id: produse.categorie_id,
     unitate_id: produse.unitate_id,
+    companie_id: produse.companie_id,
     created_at: produse.created_at,
-    categorie: {
-      id: categorii.id,
-      nume: categorii.nume,
-    },
-    unitate: {
-      id: unitati.id,
-      simbol: unitati.simbol,
-    }
+    categorie: { id: categorii.id, nume: categorii.nume },
+    unitate: { id: unitati.id, simbol: unitati.simbol }
   })
   .from(produse)
   .leftJoin(categorii, eq(produse.categorie_id, categorii.id))
   .leftJoin(unitati, eq(produse.unitate_id, unitati.id));
 
-  if (!session) {
-    return results.map((p: any) => ({ ...p, isEditable: false }));
+  const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
+  
+  if (targetId) {
+    // @ts-ignore
+    query = query.where(eq(produse.companie_id, targetId));
   }
+
+  const results = await query;
 
   const userRole = session.user.rol;
   if (userRole === 'ADMIN' || userRole === 'MANAGER') {
     return results.map((p: any) => ({ ...p, isEditable: true }));
   }
 
-  const sapteZileInMs = 7 * 24 * 60 * 60 * 1000;
-  const acum = Date.now();
-
-  return results.map((p: any) => {
-    const dataCreare = p.created_at ? new Date(p.created_at).getTime() : acum;
-    const isWithinWindow = (acum - dataCreare) < sapteZileInMs;
-    return { ...p, isEditable: isWithinWindow };
-  });
+  return results.map((p: any) => ({ ...p, isEditable: false }));
 }
 
 export async function getCategories() {
-  return await db.select().from(categorii);
+  const session = await getSession();
+  if (!session) return [];
+  
+  if (session.user.rol === 'ADMIN' && !session.user.companie_id) {
+      return await db.select().from(categorii);
+  }
+  
+  return await db.select().from(categorii).where(eq(categorii.companie_id, session.user.companie_id as number));
 }
 
 export async function getUnits() {
-  return await db.select().from(unitati);
-}
-
-export async function createCategory(data: { nume: string; descriere?: string }) {
   const session = await getSession();
-  try {
-    const [newCategory] = await db.insert(categorii).values(data).returning();
-    await auditLog(db, {
-      user_id: session?.user?.id || null,
-      actiune: 'CREATE',
-      tabel: 'categorii',
-      date_noi: newCategory,
-    });
-    revalidatePath('/catalog');
-    return { success: true, category: newCategory };
-  } catch (error) {
-    console.error('Error creating category:', error);
-    return { success: false, error: 'Categoria exista deja sau a aparut o eroare' };
+  if (!session) return [];
+
+  if (session.user.rol === 'ADMIN' && !session.user.companie_id) {
+    return await db.select().from(unitati);
   }
+
+  return await db.select().from(unitati).where(eq(unitati.companie_id, session.user.companie_id as number));
 }
 
-export async function importProducts(data: any[]) {
+export async function addProduct(data: any) {
   const session = await getSession();
+  if (!session || !session.user.companie_id) return { success: false, error: 'Trebuie să fii asociat unei firme.' };
+
   try {
-    let importedCount = 0;
-    for (const item of data) {
-      if (!item.nume) continue;
+    const [newProduct] = await db.insert(produse).values({
+      ...data,
+      companie_id: session.user.companie_id
+    }).returning();
 
-      let catId: number | undefined;
-      if (item.categorie) {
-        const existingCat = await db.query.categorii.findFirst({
-          where: eq(categorii.nume, item.categorie),
-        });
-        if (existingCat) {
-          catId = existingCat.id;
-        } else {
-          const [newCat] = await db.insert(categorii).values({ nume: item.categorie }).returning();
-          catId = newCat.id;
-        }
-      }
-
-      let unitId: number | undefined;
-      if (item.unitate) {
-        const existingUnit = await db.query.unitati.findFirst({
-          where: eq(unitati.simbol, item.unitate),
-        });
-        if (existingUnit) unitId = existingUnit.id;
-      }
-
-      const [newProduct] = await db.insert(produse).values({
-        nume: item.nume,
-        descriere: item.descriere || '',
-        pret: Math.round(parseFloat(item.pret.toString().replace(',', '.')) * 100) || 0,
-        stoc: parseInt(item.stoc?.toString()) || 0,
-        categorie_id: catId,
-        unitate_id: unitId,
-      }).returning();
-
-      if (newProduct) {
-        await auditLog(db, {
-          user_id: session?.user?.id || null,
-          actiune: 'IMPORT',
-          tabel: 'produse',
-          date_noi: newProduct,
-        });
-        importedCount++;
-      }
-    }
-    revalidatePath('/catalog');
-    return { success: true, count: importedCount };
-  } catch (error) {
-    console.error('Error importing products:', error);
-    return { success: false, error: 'Eroare la importul masiv' };
-  }
-}
-
-export async function addProduct(data: {
-  nume: string;
-  descriere?: string;
-  pret: number;
-  stoc: number;
-  categorie_id?: number;
-  unitate_id?: number;
-}) {
-  const session = await getSession();
-  try {
-    const [newProduct] = await db.insert(produse).values(data).returning();
     await auditLog(db, {
-      user_id: session?.user?.id || null,
+      user_id: session.user.id,
+      companie_id: session.user.companie_id,
       actiune: 'CREATE',
       tabel: 'produse',
       date_noi: newProduct,
     });
+
     revalidatePath('/catalog');
     return { success: true };
-  } catch (error) {
-    console.error('Error adding product:', error);
-    return { success: false, error: 'Failed to add product' };
+  } catch (error: any) {
+    return { success: false, error: error.message };
   }
 }
 
-export async function updateProduct(id: number, data: Partial<{
-  nume: string;
-  descriere?: string;
-  pret: number;
-  stoc: number;
-  categorie_id?: number;
-  unitate_id?: number;
-}>) {
-  const session = await getSession();
-  if (!session) return { success: false, error: 'Neautorizat' };
+export async function createCategory(data: { nume: string }) {
+    const session = await getSession();
+    if (!session || !session.user.companie_id) return { success: false, error: 'Neautorizat' };
 
-  try {
-    const canEdit = await canUserEditProduct(id, session.user.rol);
-    if (!canEdit) {
-      return { success: false, error: 'Fereastra de editare de 7 zile a expirat.' };
+    try {
+        const [newCat] = await db.insert(categorii).values({
+            ...data,
+            companie_id: session.user.companie_id
+        }).returning();
+        revalidatePath('/catalog');
+        return { success: true, category: newCat };
+    } catch (error: any) {
+        return { success: false, error: error.message };
     }
-
-    const oldProduct = await db.query.produse.findFirst({ where: eq(produse.id, id) });
-    const [updatedProduct] = await db.update(produse).set(data).where(eq(produse.id, id)).returning();
-
-    await auditLog(db, {
-      user_id: session.user.id,
-      actiune: 'UPDATE',
-      tabel: 'produse',
-      date_vechi: oldProduct,
-      date_noi: updatedProduct,
-    });
-
-    revalidatePath('/catalog');
-    return { success: true };
-  } catch (error) {
-    console.error('Error updating product:', error);
-    return { success: false, error: 'Failed to update product' };
-  }
-}
-
-export async function deleteProduct(id: number) {
-  const session = await getSession();
-  if (!session) return { success: false, error: 'Neautorizat' };
-
-  try {
-    const canEdit = await canUserEditProduct(id, session.user.rol);
-    if (!canEdit) {
-      return { success: false, error: 'Fereastra de editare a expirat.' };
-    }
-
-    const oldProduct = await db.query.produse.findFirst({ where: eq(produse.id, id) });
-    await db.delete(produse).where(eq(produse.id, id));
-
-    await auditLog(db, {
-      user_id: session.user.id,
-      actiune: 'DELETE',
-      tabel: 'produse',
-      date_vechi: oldProduct,
-    });
-
-    revalidatePath('/catalog');
-    return { success: true };
-  } catch (error) {
-    console.error('Error deleting product:', error);
-    return { success: false, error: 'Failed to delete product' };
-  }
 }
 
 export async function recordStockMovement(id: number, quantityChange: number) {
   const session = await getSession();
-  if (!session) return { success: false, error: 'Neautorizat' };
+  if (!session || !session.user.companie_id) return { success: false, error: 'Neautorizat' };
 
   try {
-    const canEdit = await canUserEditProduct(id, session.user.rol);
-    if (!canEdit) {
-      return { success: false, error: 'Fereastra de editare a expirat.' };
-    }
-
-    // Facem update direct cu verificare de stoc negativ într-o singură interogare (atomic)
     const [updatedProduct] = await db.update(produse)
-      .set({ 
-        stoc: sql`${produse.stoc} + ${quantityChange}` 
-      })
+      .set({ stoc: sql`${produse.stoc} + ${quantityChange}` })
       .where(and(
         eq(produse.id, id),
-        sql`${produse.stoc} + ${quantityChange} >= 0` // Prevenim stoc negativ la nivel de SQL
+        eq(produse.companie_id, session.user.companie_id),
+        sql`${produse.stoc} + ${quantityChange} >= 0`
       ))
       .returning();
 
-    if (!updatedProduct) {
-      return { success: false, error: 'Stocul nu poate fi negativ sau produsul nu exista.' };
-    }
+    if (!updatedProduct) return { success: false, error: 'Stoc insuficient sau produs inexistent.' };
 
     await auditLog(db, {
       user_id: session.user.id,
+      companie_id: session.user.companie_id,
       actiune: 'UPDATE',
       tabel: 'produse',
       date_noi: updatedProduct,
@@ -274,33 +182,75 @@ export async function recordStockMovement(id: number, quantityChange: number) {
     revalidatePath('/catalog');
     revalidatePath('/dashboard');
     return { success: true };
-  } catch (error) {
-    console.error('Error recording stock movement:', error);
-    return { success: false, error: 'Eroare la actualizarea stocului.' };
+  } catch (error: any) {
+    return { success: false, error: error.message };
   }
 }
 
-export async function getLowStockProducts(limit = 10) {
+export async function getLowStockProducts(limit = 10, companyId?: number) {
+  const session = await getSession();
+  if (!session) return [];
+
+  const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
+
   try {
-    return await db.select({
+    let query = db.select({
       id: produse.id,
       nume: produse.nume,
       stoc: produse.stoc,
-      unitate: {
-        simbol: unitati.simbol
-      }
+      unitate: { simbol: unitati.simbol }
     })
     .from(produse)
     .leftJoin(unitati, eq(produse.unitate_id, unitati.id))
-    .where(sql`${produse.stoc} < 5`)
-    .limit(limit);
+    .where(sql`${produse.stoc} < 5`);
+
+    if (targetId) {
+        // @ts-ignore
+        query = query.where(and(sql`${produse.stoc} < 5`, eq(produse.companie_id, targetId)));
+    }
+
+    return await query.limit(limit);
   } catch (error) {
-    console.error('Error fetching low stock products:', error);
     return [];
   }
 }
 
-export async function getStockValue() {
-  const stats = await getDashboardStats();
-  return stats.totalValue;
+export async function deleteProduct(id: number) {
+    const session = await getSession();
+    if (!session || !session.user.companie_id) return { success: false, error: 'Neautorizat' };
+
+    try {
+        await db.delete(produse).where(and(
+            eq(produse.id, id),
+            eq(produse.companie_id, session.user.companie_id)
+        ));
+        revalidatePath('/catalog');
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
+export async function updateProduct(id: number, data: any) {
+    const session = await getSession();
+    if (!session || !session.user.companie_id) return { success: false, error: 'Neautorizat' };
+
+    try {
+        const [updated] = await db.update(produse)
+            .set(data)
+            .where(and(eq(produse.id, id), eq(produse.companie_id, session.user.companie_id)))
+            .returning();
+        revalidatePath('/catalog');
+        return { success: true };
+    } catch (error: any) {
+        return { success: false, error: error.message };
+    }
+}
+
+export async function importProducts(data: any[]) {
+    const session = await getSession();
+    if (!session || !session.user.companie_id) return { success: false, error: 'Neautorizat' };
+    // Logica de import va trebui adaptată similar cu addProduct (companie_id)
+    // Pentru simplitate acum, returnăm succes fals dacă nu e implementat complet tenant-aware
+    return { success: false, error: 'Importul trebuie actualizat pentru Multi-tenant.' };
 }
