@@ -15,8 +15,10 @@ export async function generateContent(prompt: string) {
     const result = await model.generateContent(prompt);
     const response = await result.response;
     return response.text();
-  } catch (error) {
-    console.error("Gemini API Error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+  } catch (error: any) {
+    console.error("Gemini API Error:", error.message);
+    console.error("Error stack:", error.stack);
+    console.error("Full error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
     throw new Error("Failed to generate content from AI");
   }
 }
