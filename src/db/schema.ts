@@ -3,17 +3,6 @@ import { relations, sql } from 'drizzle-orm';
 
 export const rolEnum = pgEnum('rol', ['ADMIN', 'MANAGER', 'ANGAJAT', 'CONTABIL']);
 
-export const utilizatori = pgTable('utilizatori', {
-  id: uuid('id').primaryKey(), // ID de la Supabase Auth
-  nume: text('nume').notNull(),
-  email: text('email').notNull().unique(),
-  rol: rolEnum('rol').notNull().default('ANGAJAT'),
-});
-
-export const utilizatoriRelations = relations(utilizatori, ({ many }) => ({
-  sesiuni: many(sesiuni),
-}));
-
 export const companii = pgTable('companii', {
   id: serial('id').primaryKey(),
   nume: text('nume').notNull(),
@@ -27,24 +16,57 @@ export const companii = pgTable('companii', {
   email: text('email'),
 });
 
-export const categorii = pgTable('categorii', {
-  id: serial('id').primaryKey(),
-  nume: text('nume').notNull().unique(),
-  descriere: text('descriere'),
+export const companiiRelations = relations(companii, ({ many }) => ({
+  utilizatori: many(utilizatori),
+  produse: many(produse),
+  categorii: many(categorii),
+  unitati: many(unitati),
+}));
+
+export const utilizatori = pgTable('utilizatori', {
+  id: uuid('id').primaryKey(), // ID de la Supabase Auth
+  nume: text('nume').notNull(),
+  email: text('email').notNull().unique(),
+  rol: rolEnum('rol').notNull().default('ANGAJAT'),
+  companie_id: integer('companie_id').references(() => companii.id),
 });
 
-export const categoriiRelations = relations(categorii, ({ many }) => ({
+export const utilizatoriRelations = relations(utilizatori, ({ many, one }) => ({
+  sesiuni: many(sesiuni),
+  companie: one(companii, {
+    fields: [utilizatori.companie_id],
+    references: [companii.id],
+  }),
+}));
+
+export const categorii = pgTable('categorii', {
+  id: serial('id').primaryKey(),
+  nume: text('nume').notNull(),
+  descriere: text('descriere'),
+  companie_id: integer('companie_id').references(() => companii.id),
+});
+
+export const categoriiRelations = relations(categorii, ({ many, one }) => ({
   produse: many(produse),
+  companie: one(companii, {
+    fields: [categorii.companie_id],
+    references: [companii.id],
+  }),
 }));
 
 export const unitati = pgTable('unitati', {
   id: serial('id').primaryKey(),
-  nume: text('nume').notNull().unique(),
-  simbol: text('simbol').notNull().unique(), // ex: Buc, Kg, L
+  nume: text('nume').notNull(),
+  simbol: text('simbol').notNull(), // ex: Buc, Kg, L
+  companie_id: integer('companie_id').references(() => companii.id),
 });
 
-export const unitatiRelations = relations(unitati, ({ many }) => ({
+export const unitatiRelations = relations(unitati, ({ many, one }) => ({
   produse: many(produse),
+  companie: one(companii, {
+    fields: [unitati.companie_id],
+    references: [companii.id],
+  }),
 }));
 
 export const produse = pgTable('produse', {
@@ -55,6 +77,7 @@ export const produse = pgTable('produse', {
   stoc: integer('stoc').notNull().default(0),
   categorie_id: integer('categorie_id').references(() => categorii.id),
   unitate_id: integer('unitate_id').references(() => unitati.id),
+  companie_id: integer('companie_id').references(() => companii.id),
   created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
 });
 
@@ -66,6 +89,10 @@ export const produseRelations = relations(produse, ({ one }) => ({
   unitate: one(unitati, {
     fields: [produse.unitate_id],
     references: [unitati.id],
+  }),
+  companie: one(companii, {
+    fields: [produse.companie_id],
+    references: [companii.id],
   }),
 }));
 
@@ -85,6 +112,7 @@ export const sesiuniRelations = relations(sesiuni, ({ one }) => ({
 export const auditLogs = pgTable('audit_logs', {
   id: serial('id').primaryKey(),
   user_id: uuid('user_id').references(() => utilizatori.id),
+  companie_id: integer('companie_id').references(() => companii.id),
   actiune: text('actiune').notNull(), // ex: 'CREATE', 'UPDATE', 'DELETE'
   tabel: text('tabel').notNull(), // ex: 'produse', 'categorii'
   date_vechi: text('date_vechi'), // JSON format string
@@ -96,5 +124,9 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
   user: one(utilizatori, {
     fields: [auditLogs.user_id],
     references: [utilizatori.id],
+  }),
+  companie: one(companii, {
+    fields: [auditLogs.companie_id],
+    references: [companii.id],
   }),
 }));

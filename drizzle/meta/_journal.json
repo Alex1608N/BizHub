@@ -15,6 +15,13 @@
       "when": 1774614351147,
       "tag": "0001_migration_uuid_auth",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1775160386091,
+      "tag": "0002_mysterious_rictor",
+      "breakpoints": true
     }
   ]
 }
