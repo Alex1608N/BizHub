@@ -18,7 +18,10 @@ export async function generateContent(prompt: string) {
   } catch (error: any) {
     console.error("Gemini API Error:", error.message);
     console.error("Error stack:", error.stack);
-    console.error("Full error:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    // Log all own properties
+    Object.keys(error).forEach(key => {
+      console.error(`Error[${key}]:`, error[key]);
+    });
     throw new Error("Failed to generate content from AI");
   }
 }
