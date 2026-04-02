@@ -15,9 +15,11 @@ export async function generateProductDescription(name: string, categoryName?: st
     return description.trim();
   } catch (error) {
     console.error("Error generating AI description:", error);
-    throw new Error("Nu s-a putut genera descrierea.");
+    // Return a fallback message instead of throwing to avoid 500 error
+    return "Descrierea nu a putut fi generată momentan (limită API atinsă).";
   }
 }
+
 
 export async function getInventoryInsights(products: any[], auditLogs: any[]) {
   // Vom implementa asta la pasul următor pentru reaprovizionare

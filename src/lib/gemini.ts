@@ -1,27 +1,53 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-  console.error("Missing GOOGLE_GENERATIVE_AI_API_KEY environment variable");
-  throw new Error("Missing GOOGLE_GENERATIVE_AI_API_KEY environment variable");
+let genAI: GoogleGenerativeAI | null = null;
+
+function getGenAI() {
+  const apiKey = process.env.GOOGLE_GENERATIVE_AI_API_KEY;
+  if (!apiKey) {
+    console.error("Missing GOOGLE_GENERATIVE_AI_API_KEY environment variable");
+    return null;
+  }
+
+  if (!genAI) {
+    console.log("Initializing Gemini with key (prefix):", apiKey.substring(0, 6) + "...");
+    genAI = new GoogleGenerativeAI(apiKey);
+  }
+  return genAI;
 }
-console.log("Gemini key length:", process.env.GOOGLE_GENERATIVE_AI_API_KEY?.length);
-
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GENERATIVE_AI_API_KEY);
-
-export const model = genAI.getGenerativeModel({ model: "gemini-1.0-pro" });
 
 export async function generateContent(prompt: string) {
   try {
+    const ai = getGenAI();
+    if (!ai) {
+      throw new Error("Gemini API key is not configured.");
+    }
+
+    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
     const result = await model.generateContent(prompt);
     const response = await result.response;
     return response.text();
   } catch (error: any) {
-    console.error("Gemini API Error:", error.message);
-    console.error("Error stack:", error.stack);
-    // Log all own properties
-    Object.keys(error).forEach(key => {
-      console.error(`Error[${key}]:`, error[key]);
-    });
-    throw new Error("Failed to generate content from AI");
+    // Extensive logging for Vercel
+    console.error("--- GEMINI API ERROR START ---");
+    console.error("Message:", error.message);
+    if (error.status) console.error("Status:", error.status);
+    if (error.statusText) console.error("StatusText:", error.statusText);
+
+    // Check if it's a fetch error from Google
+    if (error.response) {
+      try {
+        const details = await error.response.json();
+        console.error("Full Error Details:", JSON.stringify(details));
+      } catch (e) {
+        console.error("Could not parse error response as JSON");
+      }
+    }
+
+    console.error("Stack:", error.stack);
+    console.error("--- GEMINI API ERROR END ---");
+
+    throw error;
   }
 }
+
