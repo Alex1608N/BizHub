@@ -53,13 +53,16 @@ export async function getDailyAuditDigest() {
  * Doar utilizatorii logați pot vedea auditul. 
  * (În mod normal, doar Admin/Manager, dar vom lăsa filtrarea în pagină/layout).
  */
-export async function getAuditLogs() {
+export async function getAuditLogs(companyId?: number) {
   const session = await getSession();
   if (!session) {
     throw new Error('Neautorizat');
   }
 
+  const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
+
   const logs = await db.query.auditLogs.findMany({
+    where: targetId ? eq(auditLogs.companie_id, targetId) : undefined,
     orderBy: [desc(auditLogs.id)],
     with: {
       user: true,
@@ -69,3 +72,4 @@ export async function getAuditLogs() {
 
   return logs;
 }
+

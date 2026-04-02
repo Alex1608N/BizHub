@@ -2,8 +2,8 @@ import React from "react";
 import { getLowStockProducts } from "@/app/actions/products";
 import { AlertTriangle, Package } from "lucide-react";
 
-export async function LowStockAlerts() {
-  const lowStockProducts = await getLowStockProducts();
+export async function LowStockAlerts({ companyId }: { companyId?: number }) {
+  const lowStockProducts = await getLowStockProducts(10, companyId);
 
   return (
     <div className="lg:col-span-2 bg-white p-8 rounded-2xl border border-gray-100 min-h-[320px] shadow-sm flex flex-col h-full">

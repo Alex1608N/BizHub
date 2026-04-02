@@ -11,10 +11,10 @@ type LowStockProduct = {
   unitate?: { simbol: string } | null;
 };
 
-export default async function AIInsights() {
-  const lowStockProducts: LowStockProduct[] = await getLowStockProducts(5);
-  const allProducts = await getProducts();
-  const auditLogs = await getAuditLogs();
+export default async function AIInsights({ companyId }: { companyId?: number }) {
+  const lowStockProducts: LowStockProduct[] = await getLowStockProducts(5, companyId);
+  const allProducts = await getProducts(companyId);
+  const auditLogs = await getAuditLogs(companyId);
 
   // Trimitem datele către AI pentru analiză
   const insights = await getInventoryInsights(allProducts, auditLogs);

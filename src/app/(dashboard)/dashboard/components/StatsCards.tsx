@@ -2,8 +2,8 @@ import React from "react";
 import { getDashboardStats } from "@/app/actions/products";
 import { TrendingUp, Package, AlertTriangle, Wallet, Store } from "lucide-react";
 
-export async function StatsCards() {
-  const statsData = await getDashboardStats();
+export async function StatsCards({ companyId }: { companyId?: number }) {
+  const statsData = await getDashboardStats(companyId);
   
   const stats = [
     { 
