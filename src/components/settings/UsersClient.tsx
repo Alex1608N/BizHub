@@ -1,9 +1,9 @@
 'use client';
 
 import { useState } from 'react';
-import { updateUserDetails } from '@/app/actions/users';
+import { updateUserDetails, deleteUser } from '@/app/actions/users';
 import { sendInvitation } from '@/app/actions/invitations';
-import { Users, Shield, Mail, Check, X, ArrowRight, UserPlus, Building2 } from 'lucide-react';
+import { Shield, Mail, UserPlus, Building2, Trash2 } from 'lucide-react';
 
 export default function UsersClient({ initialUsers, initialCompanies, userRole }: { initialUsers: any[], initialCompanies: any[], userRole?: string }) {
   const [users, setUsers] = useState(initialUsers);
@@ -11,10 +11,22 @@ export default function UsersClient({ initialUsers, initialCompanies, userRole }
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'ANGAJAT' | 'MANAGER' | 'CONTABIL'>('ANGAJAT');
 
-  const handleUpdateUser = async (userId: string, rol: string, companie_id?: number) => {
-    const result = await updateUserDetails(userId, { rol: rol as any, companie_id });
+  const handleUpdateUser = async (userId: string, rol: string) => {
+    const result = await updateUserDetails(userId, { rol: rol as any });
     if (result.success) {
-      setUsers(users.map(u => u.id === userId ? { ...u, rol, companie_id } : u));
+      setUsers(users.map(u => u.id === userId ? { ...u, rol } : u));
+    } else {
+      alert(result.error);
+    }
+  };
+
+  const handleDeleteUser = async (userId: string, userName: string) => {
+    if (!confirm(`Ești sigur că vrei să ștergi utilizatorul "${userName}"? Această acțiune nu poate fi anulată.`)) {
+      return;
+    }
+    const result = await deleteUser(userId);
+    if (result.success) {
+      setUsers(users.filter(u => u.id !== userId));
     } else {
       alert(result.error);
     }
@@ -90,9 +102,9 @@ export default function UsersClient({ initialUsers, initialCompanies, userRole }
               <tr className="text-left text-xs font-black text-gray-400 uppercase tracking-widest border-b border-gray-50">
                 <th className="px-6 py-5">Utilizator</th>
                 <th className="px-6 py-5">Email</th>
+                <th className="px-6 py-5">Firmă</th>
                 <th className="px-6 py-5">Rol / Grad</th>
-                <th className="px-6 py-5">Firmă Asociată</th>
-                {userRole === 'ADMIN' && <th className="px-6 py-5 text-right">Acțiuni</th>}
+                {(userRole === 'ADMIN' || userRole === 'MANAGER') && <th className="px-6 py-5 text-right">Acțiuni</th>}
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -116,11 +128,17 @@ export default function UsersClient({ initialUsers, initialCompanies, userRole }
                     </div>
                   </td>
                   <td className="px-6 py-4">
+                    <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
+                      <Building2 size={14} className="text-gray-400" />
+                      {user.companie?.nume || <span className="text-gray-300 italic">Nicio firmă</span>}
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
                     {userRole === 'ADMIN' ? (
                       <select 
                         className="text-xs font-bold border border-gray-200 bg-white rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-600 outline-none cursor-pointer text-indigo-700"
                         value={user.rol}
-                        onChange={(e) => handleUpdateUser(user.id, e.target.value, user.companie_id)}
+                        onChange={(e) => handleUpdateUser(user.id, e.target.value)}
                       >
                         <option value="ANGAJAT">ANGAJAT</option>
                         <option value="MANAGER">MANAGER</option>
@@ -137,29 +155,14 @@ export default function UsersClient({ initialUsers, initialCompanies, userRole }
                       </span>
                     )}
                   </td>
-                  <td className="px-6 py-4">
-                    {userRole === 'ADMIN' ? (
-                      <select 
-                        className="text-xs font-medium border border-gray-200 bg-white rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-100 outline-none cursor-pointer max-w-[150px]"
-                        value={user.companie_id || ''}
-                        onChange={(e) => handleUpdateUser(user.id, user.rol, e.target.value ? parseInt(e.target.value) : undefined)}
-                      >
-                        <option value="">Fără firmă (Global)</option>
-                        {initialCompanies.map(c => (
-                          <option key={c.id} value={c.id}>{c.nume}</option>
-                        ))}
-                      </select>
-                    ) : (
-                      <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
-                        <Building2 size={14} className="text-gray-400" />
-                        {user.companie?.nume || <span className="text-gray-300 italic">Nicio firmă</span>}
-                      </div>
-                    )}
-                  </td>
-                  {userRole === 'ADMIN' && (
+                  {(userRole === 'ADMIN' || userRole === 'MANAGER') && (
                     <td className="px-6 py-4 text-right">
-                      <button className="p-2 text-gray-400 hover:text-indigo-600 transition-colors">
-                        <ArrowRight size={18} />
+                      <button 
+                        onClick={() => handleDeleteUser(user.id, user.nume)}
+                        className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                        title="Șterge utilizator"
+                      >
+                        <Trash2 size={18} />
                       </button>
                     </td>
                   )}

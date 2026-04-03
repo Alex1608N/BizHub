@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { addCompany } from '@/app/actions/users';
-import { Building2, Plus, ArrowRight, Briefcase } from 'lucide-react';
+import { addCompany, deleteCompany } from '@/app/actions/users';
+import { Building2, Plus, ArrowRight, Briefcase, Trash2 } from 'lucide-react';
 import { useCompany } from '@/components/providers/CompanyProvider';
 
-export default function CompaniesClient({ initialCompanies }: { initialCompanies: any[] }) {
+export default function CompaniesClient({ initialCompanies, userRole }: { initialCompanies: any[], userRole?: string }) {
   const [companies, setCompanies] = useState(initialCompanies);
   const [isAddingCompany, setIsAddingCompany] = useState(false);
   const [companyData, setCompanyData] = useState({ nume: '', cui: '' });
@@ -25,6 +25,18 @@ export default function CompaniesClient({ initialCompanies }: { initialCompanies
 
   const handleSelectCompany = (companyId: number) => {
     setSelectedCompanyId(companyId);
+  };
+
+  const handleDeleteCompany = async (companyId: number, companyName: string) => {
+    if (!confirm(`Ești sigur că vrei să ștergi firma "${companyName}"? Această acțiune nu poate fi anulată.`)) {
+      return;
+    }
+    const result = await deleteCompany(companyId);
+    if (result.success) {
+      setCompanies(companies.filter(c => c.id !== companyId));
+    } else {
+      alert(result.error);
+    }
   };
 
   return (
@@ -76,7 +88,7 @@ export default function CompaniesClient({ initialCompanies }: { initialCompanies
             <div className="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-indigo-600 group-hover:bg-indigo-600 group-hover:text-white transition-all duration-300 shadow-inner">
               <Building2 size={26} />
             </div>
-            <div className="text-right">
+            <div className="flex flex-col items-end gap-2">
               <p className="text-[10px] font-black text-gray-300 uppercase tracking-widest mb-1">Status Firmă</p>
               <span className="bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider">Activă</span>
             </div>
@@ -94,12 +106,23 @@ export default function CompaniesClient({ initialCompanies }: { initialCompanies
               <div className="w-8 h-8 rounded-full border-4 border-white bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600">M</div>
               <div className="w-8 h-8 rounded-full border-4 border-white bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-400">+</div>
             </div>
-            <button 
-              onClick={() => handleSelectCompany(company.id)}
-              className="text-indigo-600 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 hover:gap-2 transition-all cursor-pointer"
-            >
-              Acces Panou <ArrowRight size={14} />
-            </button>
+            <div className="flex items-center gap-2">
+              {userRole === 'ADMIN' && (
+                <button 
+                  onClick={(e) => { e.preventDefault(); handleDeleteCompany(company.id, company.nume); }}
+                  className="p-2 text-red-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                  title="Șterge firmă"
+                >
+                  <Trash2 size={16} />
+                </button>
+              )}
+              <button 
+                onClick={() => handleSelectCompany(company.id)}
+                className="text-indigo-600 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 hover:gap-2 transition-all cursor-pointer"
+              >
+                Acces Panou <ArrowRight size={14} />
+              </button>
+            </div>
           </div>
         </div>
       ))}

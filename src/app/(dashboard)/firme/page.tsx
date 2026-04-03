@@ -22,7 +22,7 @@ export default async function CompaniesPage() {
         <p className="text-gray-500 mt-1">Gestionează toate firmele înregistrate pe platforma BizHub.</p>
       </div>
 
-      <CompaniesClient initialCompanies={companies} />
+      <CompaniesClient initialCompanies={companies} userRole={session.user.rol} />
     </div>
   );
 }
