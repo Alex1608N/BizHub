@@ -1,4 +1,5 @@
-import { getProducts, getCategories, getUnits } from '@/app/actions/products';
+import { getProducts, getCategories } from '@/app/actions/products';
+import { getUnits } from '@/app/actions/units';
 import CatalogClient from '@/components/catalog/CatalogClient';
 
 export default async function CatalogPage() {

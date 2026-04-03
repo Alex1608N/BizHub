@@ -4,6 +4,7 @@ import { db } from '@/db/index';
 
 interface AuditData {
   user_id: string | null;
+  companie_id: number | null;
   actiune: 'CREATE' | 'UPDATE' | 'DELETE' | 'LOGIN' | 'LOGOUT' | 'IMPORT';
   tabel: string;
   date_vechi?: any;
@@ -20,6 +21,7 @@ export async function auditLog(
   try {
     await tx.insert(auditLogs).values({
       user_id: data.user_id,
+      companie_id: data.companie_id,
       actiune: data.actiune,
       tabel: data.tabel,
       date_vechi: data.date_vechi ? JSON.stringify(data.date_vechi) : null,

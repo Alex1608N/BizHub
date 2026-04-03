@@ -14,20 +14,22 @@ import {
   Users,
   History,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Briefcase
 } from "lucide-react";
 import { logout } from "@/app/actions/auth";
 
 const menuItems = [
-  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-  { name: "Catalog Produse", href: "/catalog", icon: Package },
-  { name: "Timeline Audit", href: "/audit", icon: History },
-  { name: "Unitati Biz", href: "/unitati", icon: Store },
-  { name: "Utilizatori", href: "/utilizatori", icon: Users },
-  { name: "Setari", href: "/settings", icon: Settings },
+  { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "MANAGER", "ANGAJAT", "CONTABIL"] },
+  { name: "Catalog Produse", href: "/catalog", icon: Package, roles: ["ADMIN", "MANAGER", "ANGAJAT", "CONTABIL"] },
+  { name: "Timeline Audit", href: "/audit", icon: History, roles: ["ADMIN", "MANAGER"] },
+  { name: "Unități Măsură", href: "/unitati", icon: Store, roles: ["ADMIN", "MANAGER"] },
+  { name: "Management Firme", href: "/firme", icon: Briefcase, roles: ["ADMIN"] },
+  { name: "Echipă & Acces", href: "/utilizatori", icon: Users, roles: ["ADMIN", "MANAGER"] },
+  { name: "Setari", href: "/settings", icon: Settings, roles: ["ADMIN", "MANAGER"] },
 ];
 
-export function Sidebar({ userName }: { userName: string }) {
+export function Sidebar({ userName, userRole }: { userName: string, userRole: string }) {
   const pathname = usePathname();
   const router = useRouter();
   
@@ -46,6 +48,8 @@ export function Sidebar({ userName }: { userName: string }) {
     await logout();
     router.push('/login');
   };
+
+  const filteredMenuItems = menuItems.filter(item => item.roles.includes(userRole));
 
   return (
     <>
@@ -99,7 +103,7 @@ export function Sidebar({ userName }: { userName: string }) {
 
         {/* Meniu Navigare */}
         <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto scrollbar-hide">
-          {menuItems.map((item) => {
+          {filteredMenuItems.map((item) => {
             const isActive = pathname === item.href;
             return (
               <Link
@@ -135,7 +139,7 @@ export function Sidebar({ userName }: { userName: string }) {
             {(!isCollapsed || isMobileOpen) && (
               <div className="ml-3 overflow-hidden text-ellipsis whitespace-nowrap">
                 <p className="text-sm font-semibold text-gray-900 leading-none mb-1">{userName}</p>
-                <p className="text-xs text-gray-500">Membru Echipa Alpha</p>
+                <p className="text-xs text-indigo-600 font-medium tracking-tight truncate">{userRole}</p>
               </div>
             )}
           </div>

@@ -92,26 +92,17 @@ export async function getProducts(companyId?: number) {
   return results.map((p: any) => ({ ...p, isEditable: false }));
 }
 
-export async function getCategories() {
+export async function getCategories(companyId?: number) {
   const session = await getSession();
   if (!session) return [];
   
-  if (session.user.rol === 'ADMIN' && !session.user.companie_id) {
+  const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
+
+  if (session.user.rol === 'ADMIN' && !targetId) {
       return await db.select().from(categorii);
   }
   
-  return await db.select().from(categorii).where(eq(categorii.companie_id, session.user.companie_id as number));
-}
-
-export async function getUnits() {
-  const session = await getSession();
-  if (!session) return [];
-
-  if (session.user.rol === 'ADMIN' && !session.user.companie_id) {
-    return await db.select().from(unitati);
-  }
-
-  return await db.select().from(unitati).where(eq(unitati.companie_id, session.user.companie_id as number));
+  return await db.select().from(categorii).where(eq(categorii.companie_id, targetId as number));
 }
 
 export async function addProduct(data: any) {
@@ -249,8 +240,8 @@ export async function updateProduct(id: number, data: any) {
 
 export async function importProducts(data: any[]) {
     const session = await getSession();
-    if (!session || !session.user.companie_id) return { success: false, error: 'Neautorizat' };
+    if (!session || !session.user.companie_id) return { success: false, error: 'Neautorizat', count: 0 };
     // Logica de import va trebui adaptată similar cu addProduct (companie_id)
     // Pentru simplitate acum, returnăm succes fals dacă nu e implementat complet tenant-aware
-    return { success: false, error: 'Importul trebuie actualizat pentru Multi-tenant.' };
+    return { success: false, error: 'Importul trebuie actualizat pentru Multi-tenant.', count: 0 };
 }

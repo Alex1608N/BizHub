@@ -1,9 +1,11 @@
 import React from "react";
 import { getDashboardStats } from "@/app/actions/products";
+import { getUnits } from "@/app/actions/units";
 import { TrendingUp, Package, AlertTriangle, Wallet, Store } from "lucide-react";
 
 export async function StatsCards({ companyId }: { companyId?: number }) {
   const statsData = await getDashboardStats(companyId);
+  const units = await getUnits(companyId);
   
   const stats = [
     { 
@@ -28,8 +30,8 @@ export async function StatsCards({ companyId }: { companyId?: number }) {
       bg: statsData.lowStockCount > 0 ? "bg-red-50" : "bg-emerald-50"
     },
     { 
-      label: "Unitati Active", 
-      value: "1", 
+      label: "Unitati Masura", 
+      value: units.length.toString(), 
       icon: Store,
       color: "text-purple-600",
       bg: "bg-purple-50"
@@ -50,12 +52,11 @@ export async function StatsCards({ companyId }: { companyId?: number }) {
             </div>
           </div>
           <div className="mt-4 flex items-center text-xs">
-             <span className="text-emerald-500 font-bold flex items-center mr-1">
-               <TrendingUp size={12} className="mr-0.5" /> 100%
-             </span>
-             <span className="text-gray-400 font-medium tracking-tight">sincronizat local</span>
-          </div>
-        </div>
+              <span className="text-emerald-500 font-bold flex items-center mr-1">
+                <TrendingUp size={12} className="mr-0.5" /> 
+              </span>
+              <span className="text-gray-400 font-medium tracking-tight">Status: Date actualizate</span>
+          </div>        </div>
       ))}
     </div>
   );

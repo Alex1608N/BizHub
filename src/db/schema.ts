@@ -130,3 +130,24 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
     references: [companii.id],
   }),
 }));
+
+export const invitatii = pgTable('invitatii', {
+  id: serial('id').primaryKey(),
+  email: text('email').notNull(),
+  companie_id: integer('companie_id').notNull().references(() => companii.id),
+  rol: rolEnum('rol').notNull().default('ANGAJAT'),
+  status: text('status').notNull().default('PENDING'), // PENDING, ACCEPTED, REJECTED
+  inviter_id: uuid('inviter_id').notNull().references(() => utilizatori.id),
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const invitatiiRelations = relations(invitatii, ({ one }) => ({
+  companie: one(companii, {
+    fields: [invitatii.companie_id],
+    references: [companii.id],
+  }),
+  inviter: one(utilizatori, {
+    fields: [invitatii.inviter_id],
+    references: [utilizatori.id],
+  }),
+}));

@@ -25,6 +25,7 @@ async function runDemo() {
 
     await auditLog(db, {
       user_id: userId,
+      companie_id: null,
       actiune: 'CREATE',
       tabel: 'produse',
       date_noi: p1
@@ -39,6 +40,7 @@ async function runDemo() {
 
     await auditLog(db, {
       user_id: userId,
+      companie_id: null,
       actiune: 'UPDATE',
       tabel: 'stoc',
       date_vechi: { id: p1.id, stoc: p1.stoc },
@@ -51,6 +53,7 @@ async function runDemo() {
     
     await auditLog(db, {
       user_id: userId,
+      companie_id: null,
       actiune: 'DELETE',
       tabel: 'produse',
       date_vechi: p2

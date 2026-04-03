@@ -2,8 +2,8 @@ import React from "react";
 import { getDailyAuditDigest, getAuditLogs } from "@/app/actions/audit";
 import { History, Package, AlertTriangle, User, Clock } from "lucide-react";
 
-export async function DailyDigest() {
-  const dailyDigest = await getDailyAuditDigest();
+export async function DailyDigest({ companyId }: { companyId?: number }) {
+  const dailyDigest = await getDailyAuditDigest(companyId);
 
   return (
     <div className="bg-gradient-to-br from-indigo-600 to-blue-700 p-8 rounded-2xl text-white shadow-lg flex flex-col justify-between h-full">
@@ -15,7 +15,7 @@ export async function DailyDigest() {
             <h3 className="text-xl font-bold">Daily Digest</h3>
           </div>
           <p className="text-indigo-100 text-sm leading-relaxed mb-6">
-            Activitatea de ieri inregistrata in sistem:
+            Activitatea {companyId ? 'firmei selectate' : 'globală'} de ieri inregistrata in sistem:
           </p>
           
           <div className="grid grid-cols-2 gap-4">
@@ -42,8 +42,8 @@ export async function DailyDigest() {
   );
 }
 
-export async function AuditHistory() {
-  const recentLogs = await getAuditLogs();
+export async function AuditHistory({ companyId }: { companyId?: number }) {
+  const recentLogs = await getAuditLogs(companyId);
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-6">

@@ -48,13 +48,13 @@ export default async function DashboardPage({
         </Suspense>
         
         <Suspense fallback={<div className="bg-gray-200 rounded-2xl h-full animate-pulse"></div>}>
-          <DailyDigest />
+          <DailyDigest companyId={companyId} />
         </Suspense>
       </div>
 
       {/* Activity Feed - Streamed */}
       <Suspense fallback={<AuditSkeleton />}>
-        <AuditHistory />
+        <AuditHistory companyId={companyId} />
       </Suspense>
     </div>
   );

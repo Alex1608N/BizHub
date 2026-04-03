@@ -22,6 +22,13 @@
       "when": 1775160386091,
       "tag": "0002_mysterious_rictor",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1775209897547,
+      "tag": "0003_steady_gertrude_yorkes",
+      "breakpoints": true
     }
   ]
 }

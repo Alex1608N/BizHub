@@ -6,19 +6,21 @@ import { eq, and } from 'drizzle-orm';
 import { getSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
-export async function getUnits() {
+export async function getUnits(companyId?: number) {
   const session = await getSession();
   if (!session) throw new Error('Neautorizat');
 
-  // Super-Adminul vede tot, restul văd doar unitățile firmei lor
-  if (session.user.rol === 'ADMIN' && !session.user.companie_id) {
+  const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
+
+  // Super-Adminul vede tot (dacă nu e targetId), restul văd doar unitățile firmei lor
+  if (session.user.rol === 'ADMIN' && !targetId) {
     return await db.query.unitati.findMany({
         with: { companie: true }
     });
   }
 
   return await db.query.unitati.findMany({
-    where: eq(unitati.companie_id, session.user.companie_id as number),
+    where: eq(unitati.companie_id, targetId as number),
   });
 }
 

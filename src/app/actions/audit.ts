@@ -8,9 +8,11 @@ import { getSession } from '@/lib/auth';
 /**
  * Calculeaza rezumatul activitatii din ziua precedenta folosind agregari SQL.
  */
-export async function getDailyAuditDigest() {
+export async function getDailyAuditDigest(companyId?: number) {
   const session = await getSession();
   if (!session) return { total: 0, updates: 0, creates: 0, deletes: 0 };
+
+  const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
 
   try {
     const yesterdayStart = new Date();
@@ -21,6 +23,15 @@ export async function getDailyAuditDigest() {
     yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
     yesterdayEnd.setHours(23, 59, 59, 999);
 
+    const filters = [
+        gte(auditLogs.timestamp, yesterdayStart),
+        lte(auditLogs.timestamp, yesterdayEnd)
+    ];
+
+    if (targetId) {
+        filters.push(eq(auditLogs.companie_id, targetId));
+    }
+
     const [stats] = await db
       .select({
         total: count(),
@@ -29,12 +40,7 @@ export async function getDailyAuditDigest() {
         deletes: count(sql`CASE WHEN ${auditLogs.actiune} = 'DELETE' THEN 1 END`),
       })
       .from(auditLogs)
-      .where(
-        and(
-          gte(auditLogs.timestamp, yesterdayStart),
-          lte(auditLogs.timestamp, yesterdayEnd)
-        )
-      );
+      .where(and(...filters));
 
     return {
       total: stats.total || 0,

@@ -18,6 +18,7 @@ async function testAudit() {
 
     await auditLog(db, {
       user_id: null,
+      companie_id: null,
       actiune: 'CREATE',
       tabel: 'produse',
       date_noi: newProduct
@@ -32,6 +33,7 @@ async function testAudit() {
 
     await auditLog(db, {
       user_id: null,
+      companie_id: null,
       actiune: 'UPDATE',
       tabel: 'produse',
       date_vechi: newProduct,

@@ -46,13 +46,16 @@ export async function addCompany(data: { nume: string, cui?: string }) {
     }
 }
 
-export async function updateUserDetails(userId: string, data: { rol: any, companie_id?: number }) {
+export async function updateUserDetails(userId: string, data: { rol: any, companie_id?: number | null }) {
     const session = await getSession();
     if (!session || session.user.rol !== 'ADMIN') throw new Error('Doar un Admin poate muta utilizatorii între firme.');
 
     try {
         await db.update(utilizatori)
-            .set(data)
+            .set({
+                rol: data.rol,
+                companie_id: data.companie_id === undefined ? undefined : data.companie_id
+            })
             .where(eq(utilizatori.id, userId));
         revalidatePath('/utilizatori');
         return { success: true };
