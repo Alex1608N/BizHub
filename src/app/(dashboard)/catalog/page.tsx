@@ -2,11 +2,18 @@ import { getProducts, getCategories } from '@/app/actions/products';
 import { getUnits } from '@/app/actions/units';
 import CatalogClient from '@/components/catalog/CatalogClient';
 
-export default async function CatalogPage() {
+export default async function CatalogPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ companyId?: string }>;
+}) {
+  const params = await searchParams;
+  const companyId = params.companyId ? parseInt(params.companyId) : undefined;
+
   const [products, categories, units] = await Promise.all([
-    getProducts(),
-    getCategories(),
-    getUnits()
+    getProducts(companyId),
+    getCategories(companyId),
+    getUnits(companyId)
   ]);
 
   return (

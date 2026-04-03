@@ -29,9 +29,15 @@ const menuItems = [
   { name: "Setari", href: "/settings", icon: Settings, roles: ["ADMIN", "MANAGER"] },
 ];
 
-export function Sidebar({ userName, userRole }: { userName: string, userRole: string }) {
+export function Sidebar({ userName, userRole, selectedCompanyId }: { userName: string, userRole: string, selectedCompanyId: number | null }) {
   const pathname = usePathname();
   const router = useRouter();
+  
+  const buildUrl = (baseUrl: string) => {
+    if (!selectedCompanyId) return baseUrl;
+    const separator = baseUrl.includes('?') ? '&' : '?';
+    return `${baseUrl}${separator}companyId=${selectedCompanyId}`;
+  };
   
   // Stări pentru Desktop (collapsible) și Mobil (drawer)
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -104,13 +110,14 @@ export function Sidebar({ userName, userRole }: { userName: string, userRole: st
         {/* Meniu Navigare */}
         <nav className="flex-1 px-4 py-6 space-y-1.5 overflow-y-auto scrollbar-hide">
           {filteredMenuItems.map((item) => {
-            const isActive = pathname === item.href;
+            const isActive = pathname.startsWith(item.href.split('?')[0]);
+            const href = buildUrl(item.href);
             return (
               <Link
                 key={item.href}
-                href={item.href}
+                href={href}
                 className={`
-                  flex items-center p-3 rounded-xl transition-all duration-200 group
+                  flex items-center p-3 rounded-xl transition-all duration-200 group relative
                   ${isActive 
                     ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" 
                     : "text-gray-500 hover:bg-gray-50 hover:text-indigo-600"}
@@ -124,6 +131,9 @@ export function Sidebar({ userName, userRole }: { userName: string, userRole: st
                    <div className="absolute left-full ml-2 px-2 py-1 bg-gray-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity whitespace-nowrap z-50">
                       {item.name}
                    </div>
+                )}
+                {selectedCompanyId && !isActive && (
+                  <div className="absolute right-3 top-1/2 -translate-y-1/2 w-2 h-2 bg-emerald-400 rounded-full" title="Firmă selectată" />
                 )}
               </Link>
             );

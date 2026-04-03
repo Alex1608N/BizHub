@@ -6,11 +6,17 @@ import { getSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 import { eq } from 'drizzle-orm';
 
-export async function getCompany() {
+export async function getCompany(companyId?: number) {
   const session = await getSession();
   if (!session) return null;
 
   try {
+    if (companyId) {
+      const company = await db.query.companii.findFirst({
+        where: eq(companii.id, companyId)
+      });
+      return company || null;
+    }
     const company = await db.query.companii.findFirst();
     return company || null;
   } catch (error) {

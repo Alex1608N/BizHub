@@ -4,6 +4,10 @@ import { StatsCards, StatsCardsSkeleton } from "./components/StatsCards";
 import { LowStockAlerts, LowStockSkeleton } from "./components/LowStockAlerts";
 import { DailyDigest, AuditHistory, AuditSkeleton } from "./components/AuditHistory";
 import AIInsights, { AIInsightsSkeleton } from "@/components/dashboard/AIInsights";
+import { cookies } from "next/headers";
+import { COMPANY_COOKIE_NAME } from "@/lib/company";
+import Link from "next/link";
+import { Building2 } from "lucide-react";
 
 export default async function DashboardPage({
   searchParams,
@@ -14,6 +18,36 @@ export default async function DashboardPage({
   const companyId = params.companyId ? parseInt(params.companyId) : undefined;
   const session = await getSession();
   
+  const cookieStore = await cookies();
+  const selectedCompanyCookie = cookieStore.get(COMPANY_COOKIE_NAME);
+  const selectedCompanyId = selectedCompanyCookie ? parseInt(selectedCompanyCookie.value) : undefined;
+
+  const isAdminWithoutCompany = session?.user?.rol === 'ADMIN' && !companyId && !selectedCompanyId;
+  
+  if (isAdminWithoutCompany) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] text-center">
+        <div className="w-20 h-20 bg-indigo-50 rounded-3xl flex items-center justify-center mb-6">
+          <Building2 size={40} className="text-indigo-400" />
+        </div>
+        <h2 className="text-2xl font-bold text-gray-900 mb-3">Selectează o Firmă</h2>
+        <p className="text-gray-500 mb-8 max-w-md">
+          Ca administrator, trebuie să selectezi o firmă pentru a vedea datele. 
+          Dashboard-ul nu are relevanță fără o firmă selectată.
+        </p>
+        <Link 
+          href="/firme" 
+          className="inline-flex items-center gap-2 bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-700 transition-colors shadow-lg shadow-indigo-100"
+        >
+          <Building2 size={20} />
+          Accesează Gestionare Firme
+        </Link>
+      </div>
+    );
+  }
+
+  const effectiveCompanyId = companyId || selectedCompanyId;
+  
   return (
     <div className="space-y-8">
       <div className="flex justify-between items-end">
@@ -22,7 +56,7 @@ export default async function DashboardPage({
             Salut, {session?.user?.nume || "Utilizator"}!
           </h2>
           <p className="text-gray-500 mt-1">
-            {companyId ? `Vizualizezi datele firmei ID #${companyId}` : "Iata sumarul operatiunilor tale in BizHub ERP."}
+            {effectiveCompanyId ? `Vizualizezi datele firmei ID #${effectiveCompanyId}` : "Iata sumarul operatiunilor tale in BizHub ERP."}
           </p>
         </div>
         <div className="hidden md:block text-right">
@@ -33,28 +67,28 @@ export default async function DashboardPage({
 
       {/* Stats Grid - Streamed */}
       <Suspense fallback={<StatsCardsSkeleton />}>
-        <StatsCards companyId={companyId} />
+        <StatsCards companyId={effectiveCompanyId} />
       </Suspense>
 
       {/* AI Insights Section */}
       <Suspense fallback={<AIInsightsSkeleton />}>
-        <AIInsights companyId={companyId} />
+        <AIInsights companyId={effectiveCompanyId} />
       </Suspense>
 
       {/* Main Sections - Streamed separately */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         <Suspense fallback={<LowStockSkeleton />}>
-          <LowStockAlerts companyId={companyId} />
+          <LowStockAlerts companyId={effectiveCompanyId} />
         </Suspense>
         
         <Suspense fallback={<div className="bg-gray-200 rounded-2xl h-full animate-pulse"></div>}>
-          <DailyDigest companyId={companyId} />
+          <DailyDigest companyId={effectiveCompanyId} />
         </Suspense>
       </div>
 
       {/* Activity Feed - Streamed */}
       <Suspense fallback={<AuditSkeleton />}>
-        <AuditHistory companyId={companyId} />
+        <AuditHistory companyId={effectiveCompanyId} />
       </Suspense>
     </div>
   );

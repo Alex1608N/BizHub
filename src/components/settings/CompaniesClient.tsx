@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { addCompany } from '@/app/actions/users';
 import { Building2, Plus, ArrowRight, Briefcase } from 'lucide-react';
+import { useCompany } from '@/components/providers/CompanyProvider';
 
 export default function CompaniesClient({ initialCompanies }: { initialCompanies: any[] }) {
   const [companies, setCompanies] = useState(initialCompanies);
   const [isAddingCompany, setIsAddingCompany] = useState(false);
   const [companyData, setCompanyData] = useState({ nume: '', cui: '' });
+  const { setSelectedCompanyId } = useCompany();
 
   const handleAddCompany = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,6 +21,10 @@ export default function CompaniesClient({ initialCompanies }: { initialCompanies
     } else {
       alert(result.error);
     }
+  };
+
+  const handleSelectCompany = (companyId: number) => {
+    setSelectedCompanyId(companyId);
   };
 
   return (
@@ -88,12 +94,12 @@ export default function CompaniesClient({ initialCompanies }: { initialCompanies
               <div className="w-8 h-8 rounded-full border-4 border-white bg-blue-100 flex items-center justify-center text-[10px] font-bold text-blue-600">M</div>
               <div className="w-8 h-8 rounded-full border-4 border-white bg-gray-100 flex items-center justify-center text-[10px] font-bold text-gray-400">+</div>
             </div>
-            <a 
-              href={`/dashboard?companyId=${company.id}`}
+            <button 
+              onClick={() => handleSelectCompany(company.id)}
               className="text-indigo-600 text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 hover:gap-2 transition-all cursor-pointer"
             >
               Acces Panou <ArrowRight size={14} />
-            </a>
+            </button>
           </div>
         </div>
       ))}

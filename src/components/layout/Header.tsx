@@ -1,13 +1,21 @@
 'use client';
 
 import React from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import NotificationBell from "./NotificationBell";
-import { Globe, ArrowLeft } from "lucide-react";
+import { Globe, ArrowLeft, Building2 } from "lucide-react";
 import Link from "next/link";
+import { useCompany } from "@/components/providers/CompanyProvider";
 
-export default function Header({ userName, userRole, hasCompany }: { userName: string, userRole: string, hasCompany: boolean }) {
+export default function Header({ userName, userRole, hasCompany, selectedCompanyId }: { 
+  userName: string, 
+  userRole: string, 
+  hasCompany: boolean,
+  selectedCompanyId: number | null 
+}) {
   const pathname = usePathname();
+  const router = useRouter();
+  const { clearSelectedCompany } = useCompany();
   const pageName = pathname.split('/').pop() || 'Dashboard';
 
   return (
@@ -18,12 +26,26 @@ export default function Header({ userName, userRole, hasCompany }: { userName: s
           <span className="text-sm font-semibold text-gray-700 capitalize">{pageName === 'dashboard' ? 'ERP' : pageName}</span>
         </div>
         
-        {userRole === 'ADMIN' && hasCompany && (
+        {userRole === 'ADMIN' && selectedCompanyId && (
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-black uppercase tracking-wider border border-indigo-100">
+              <Building2 size={12} /> Vizualizezi Firma #{selectedCompanyId}
+            </div>
+            <button 
+              onClick={() => clearSelectedCompany()}
+              className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-[10px] font-black uppercase tracking-wider hover:bg-amber-100 transition-all border border-amber-100"
+            >
+              <Globe size={12} /> Revenire la Global
+            </button>
+          </div>
+        )}
+        
+        {userRole === 'ADMIN' && !selectedCompanyId && hasCompany && (
           <Link 
-            href="/dashboard" 
-            className="flex items-center gap-1.5 px-3 py-1 bg-amber-50 text-amber-700 rounded-full text-[10px] font-black uppercase tracking-wider hover:bg-amber-100 transition-all border border-amber-100"
+            href="/firme" 
+            className="flex items-center gap-1.5 px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full text-[10px] font-black uppercase tracking-wider hover:bg-indigo-100 transition-all border border-indigo-100"
           >
-            <Globe size={12} /> Revenire la Global
+            <Building2 size={12} /> Selectează Firmă
           </Link>
         )}
       </div>

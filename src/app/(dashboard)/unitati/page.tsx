@@ -1,8 +1,10 @@
-import React, { Suspense } from "react";
+import React from "react";
 import { getUnits } from "@/app/actions/units";
 import { getSession } from "@/lib/auth";
 import UnitsClient from "@/components/settings/UnitsClient";
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
+import { COMPANY_COOKIE_NAME } from "@/lib/company";
 
 export default async function UnitsPage({
   searchParams,
@@ -10,14 +12,19 @@ export default async function UnitsPage({
   searchParams: Promise<{ companyId?: string }>;
 }) {
   const params = await searchParams;
-  const companyId = params.companyId ? parseInt(params.companyId) : undefined;
+  const urlCompanyId = params.companyId ? parseInt(params.companyId) : undefined;
   const session = await getSession();
   
   if (!session || !['ADMIN', 'MANAGER'].includes(session.user.rol)) {
     redirect('/dashboard');
   }
 
-  const units = await getUnits(companyId);
+  const cookieStore = await cookies();
+  const selectedCompanyCookie = cookieStore.get(COMPANY_COOKIE_NAME);
+  const selectedCompanyId = selectedCompanyCookie ? parseInt(selectedCompanyCookie.value) : undefined;
+
+  const effectiveCompanyId = urlCompanyId || selectedCompanyId;
+  const units = await getUnits(effectiveCompanyId);
 
   return (
     <div className="space-y-8">

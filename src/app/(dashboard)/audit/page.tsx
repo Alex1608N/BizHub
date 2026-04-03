@@ -4,17 +4,30 @@ import { getSession } from '@/lib/auth';
 import AuditTimeline from '@/components/audit/AuditTimeline';
 import { redirect } from 'next/navigation';
 import { History } from 'lucide-react';
+import { cookies } from 'next/headers';
+import { COMPANY_COOKIE_NAME } from '@/lib/company';
 
-export default async function AuditPage() {
+export default async function AuditPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ companyId?: string }>;
+}) {
+  const params = await searchParams;
+  const urlCompanyId = params.companyId ? parseInt(params.companyId) : undefined;
   const session = await getSession();
 
-  // Securitate: doar ADMIN și MANAGER pot vedea auditul complet
   if (!session || (session.user.rol !== 'ADMIN' && session.user.rol !== 'MANAGER')) {
     redirect('/dashboard');
   }
 
-  const logs = await getAuditLogs();
-  const company = await getCompany();
+  const cookieStore = await cookies();
+  const selectedCompanyCookie = cookieStore.get(COMPANY_COOKIE_NAME);
+  const selectedCompanyId = selectedCompanyCookie ? parseInt(selectedCompanyCookie.value) : undefined;
+
+  const effectiveCompanyId = urlCompanyId || selectedCompanyId;
+
+  const logs = await getAuditLogs(effectiveCompanyId);
+  const company = effectiveCompanyId ? await getCompany(effectiveCompanyId) : await getCompany();
 
   return (
     <div className="max-w-5xl mx-auto">
