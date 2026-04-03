@@ -1,8 +1,8 @@
 'use server';
 
 import { db } from '@/db/index';
-import { companii, utilizatori, auditLogs } from '@/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { companii, utilizatori, auditLogs, produse, categorii, unitati, invitatii } from '@/db/schema';
+import { eq, and, desc, inArray } from 'drizzle-orm';
 import { getSession } from '@/lib/auth';
 import { revalidatePath } from 'next/cache';
 
@@ -79,6 +79,24 @@ export async function deleteCompany(companyId: number) {
             return { success: false, error: 'Firma nu există.' };
         }
 
+        // Stergem toate datele asociate firmei (in ordine pentru a evita constraint violations)
+        
+        // 1. Stergem utilizatorii firmei
+        await db.delete(utilizatori).where(eq(utilizatori.companie_id, companyId));
+        
+        // 2. Stergem produsele firmei
+        await db.delete(produse).where(eq(produse.companie_id, companyId));
+        
+        // 3. Stergem categoriile firmei
+        await db.delete(categorii).where(eq(categorii.companie_id, companyId));
+        
+        // 4. Stergem unitatile firmei
+        await db.delete(unitati).where(eq(unitati.companie_id, companyId));
+        
+        // 5. Stergem invitatiile firmei
+        await db.delete(invitatii).where(eq(invitatii.companie_id, companyId));
+        
+        // 6. Stergem firma
         await db.delete(companii).where(eq(companii.id, companyId));
 
         await db.insert(auditLogs).values({
@@ -91,9 +109,13 @@ export async function deleteCompany(companyId: number) {
         });
 
         revalidatePath('/firme');
+        revalidatePath('/utilizatori');
+        revalidatePath('/catalog');
+        revalidatePath('/unitati');
         return { success: true };
     } catch (error: any) {
-        return { success: false, error: error.message };
+        console.error('Error deleting company:', error);
+        return { success: false, error: 'Nu s-a putut șterge firma. Verificați dacă există date asociate.' };
     }
 }
 

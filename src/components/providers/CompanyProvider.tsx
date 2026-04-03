@@ -40,11 +40,7 @@ export function CompanyProvider({
     
     if (id) {
       document.cookie = `${COMPANY_COOKIE_NAME}=${id}; path=/; max-age=31536000; SameSite=Lax`;
-    }
-    
-    if (pathname !== '/dashboard' && pathname !== '/firme') {
-      const separator = pathname.includes('?') ? '&' : '?';
-      router.push(`${pathname}${separator}companyId=${id}`);
+      router.push(`/dashboard?companyId=${id}`);
     }
   };
 
