@@ -1,5 +1,3 @@
-'use client';
-
 import { cookies } from 'next/headers';
 
 export const COMPANY_COOKIE_NAME = 'bizhub_selected_company';
