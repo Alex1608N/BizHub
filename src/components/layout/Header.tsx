@@ -3,6 +3,7 @@
 import React from "react";
 import { usePathname, useRouter } from "next/navigation";
 import NotificationBell from "./NotificationBell";
+import AttendanceControls from "./AttendanceControls";
 import { Globe, ArrowLeft, Building2 } from "lucide-react";
 import Link from "next/link";
 import { useCompany } from "@/components/providers/CompanyProvider";
@@ -21,6 +22,7 @@ export default function Header({ userName, userRole, hasCompany, selectedCompany
   return (
     <header className="hidden lg:flex h-16 items-center justify-between px-8 bg-white/80 backdrop-blur-md border-b border-gray-200 sticky top-0 z-10">
       <div className="flex items-center gap-4">
+        {/* ... (restul partii stangi ramane neschimbat) */}
         <div className="flex items-center gap-2">
           <span className="text-sm font-medium text-gray-400">BizHub</span>
           <span className="text-sm font-semibold text-gray-700 capitalize">{pageName === 'dashboard' ? 'ERP' : pageName}</span>
@@ -51,6 +53,7 @@ export default function Header({ userName, userRole, hasCompany, selectedCompany
       </div>
 
       <div className="flex items-center gap-6">
+        <AttendanceControls />
         <NotificationBell />
 
         <div className="flex items-center gap-3 border-l pl-6 border-gray-100">

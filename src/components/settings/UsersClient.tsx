@@ -3,13 +3,15 @@
 import { useState } from 'react';
 import { updateUserDetails, deleteUser } from '@/app/actions/users';
 import { sendInvitation } from '@/app/actions/invitations';
-import { Shield, Mail, UserPlus, Building2, Trash2 } from 'lucide-react';
+import { Shield, Mail, UserPlus, Building2, Trash2, History } from 'lucide-react';
+import UserActivityModal from './UserActivityModal';
 
 export default function UsersClient({ initialUsers, initialCompanies, userRole }: { initialUsers: any[], initialCompanies: any[], userRole?: string }) {
   const [users, setUsers] = useState(initialUsers);
   const [isInviting, setIsInviting] = useState(false);
   const [inviteEmail, setInviteEmail] = useState('');
   const [inviteRole, setInviteRole] = useState<'ANGAJAT' | 'MANAGER' | 'CONTABIL'>('ANGAJAT');
+  const [selectedUserForActivity, setSelectedUserForActivity] = useState<{id: string, nume: string} | null>(null);
 
   const handleUpdateUser = async (userId: string, rol: string) => {
     const result = await updateUserDetails(userId, { rol: rol as any });
@@ -156,7 +158,14 @@ export default function UsersClient({ initialUsers, initialCompanies, userRole }
                     )}
                   </td>
                   {(userRole === 'ADMIN' || userRole === 'MANAGER') && (
-                    <td className="px-6 py-4 text-right">
+                    <td className="px-6 py-4 text-right flex items-center justify-end gap-2">
+                      <button 
+                        onClick={() => setSelectedUserForActivity({ id: user.id, nume: user.nume })}
+                        className="p-2 text-gray-400 hover:text-indigo-600 hover:bg-indigo-50 rounded-lg transition-all"
+                        title="Vezi Activitate"
+                      >
+                        <History size={18} />
+                      </button>
                       <button 
                         onClick={() => handleDeleteUser(user.id, user.nume)}
                         className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
@@ -172,6 +181,14 @@ export default function UsersClient({ initialUsers, initialCompanies, userRole }
           </table>
         </div>
       </div>
+
+      {selectedUserForActivity && (
+        <UserActivityModal 
+          userId={selectedUserForActivity.id} 
+          userName={selectedUserForActivity.nume} 
+          onClose={() => setSelectedUserForActivity(null)} 
+        />
+      )}
     </div>
   );
 }

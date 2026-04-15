@@ -151,3 +151,22 @@ export const invitatiiRelations = relations(invitatii, ({ one }) => ({
     references: [utilizatori.id],
   }),
 }));
+
+export const pontaj = pgTable('pontaj', {
+  id: serial('id').primaryKey(),
+  user_id: uuid('user_id').references(() => utilizatori.id).notNull(),
+  companie_id: integer('companie_id').references(() => companii.id).notNull(),
+  tip: text('tip').notNull(), // 'START', 'END', 'PAUZA_START', 'PAUZA_STOP'
+  timestamp: timestamp('timestamp', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const pontajRelations = relations(pontaj, ({ one }) => ({
+  user: one(utilizatori, {
+    fields: [pontaj.user_id],
+    references: [utilizatori.id],
+  }),
+  companie: one(companii, {
+    fields: [pontaj.companie_id],
+    references: [companii.id],
+  }),
+}));

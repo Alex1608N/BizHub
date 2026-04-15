@@ -23,7 +23,6 @@ const menuItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard, roles: ["ADMIN", "MANAGER", "ANGAJAT", "CONTABIL"] },
   { name: "Catalog Produse", href: "/catalog", icon: Package, roles: ["ADMIN", "MANAGER", "ANGAJAT", "CONTABIL"] },
   { name: "Timeline Audit", href: "/audit", icon: History, roles: ["ADMIN", "MANAGER"] },
-  { name: "Unități Măsură", href: "/unitati", icon: Store, roles: ["ADMIN", "MANAGER"] },
   { name: "Management Firme", href: "/firme", icon: Briefcase, roles: ["ADMIN"] },
   { name: "Echipă & Acces", href: "/utilizatori", icon: Users, roles: ["ADMIN", "MANAGER"] },
   { name: "Setari", href: "/settings", icon: Settings, roles: ["ADMIN", "MANAGER"] },

@@ -38,7 +38,6 @@ export async function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith('/dashboard') || 
     request.nextUrl.pathname.startsWith('/catalog') ||
     request.nextUrl.pathname.startsWith('/audit') ||
-    request.nextUrl.pathname.startsWith('/unitati') ||
     request.nextUrl.pathname.startsWith('/utilizatori') ||
     request.nextUrl.pathname.startsWith('/settings') ||
     request.nextUrl.pathname.startsWith('/firme') ||

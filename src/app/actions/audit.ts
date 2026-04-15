@@ -1,9 +1,33 @@
 'use server';
 
 import { db } from '@/db/index';
-import { auditLogs } from '@/db/schema';
+import { auditLogs, pontaj } from '@/db/schema';
 import { desc, and, gte, lte, count, sql, eq } from 'drizzle-orm';
 import { getSession } from '@/lib/auth';
+
+/**
+ * Preluam activitatea completa a unui utilizator (audit + pontaj).
+ */
+export async function getUserFullActivity(userId: string) {
+  const session = await getSession();
+  if (!session || (session.user.rol !== 'ADMIN' && session.user.rol !== 'MANAGER')) {
+    throw new Error('Neautorizat');
+  }
+
+  const logs = await db.query.auditLogs.findMany({
+    where: eq(auditLogs.user_id, userId),
+    orderBy: [desc(auditLogs.timestamp)],
+    limit: 20,
+  });
+
+  const attendance = await db.query.pontaj.findMany({
+    where: eq(pontaj.user_id, userId),
+    orderBy: [desc(pontaj.timestamp)],
+    limit: 20,
+  });
+
+  return { logs, attendance };
+}
 
 /**
  * Calculeaza rezumatul activitatii din ziua precedenta folosind agregari SQL.
