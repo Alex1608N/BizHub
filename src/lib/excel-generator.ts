@@ -34,7 +34,7 @@ export const exportAuditToExcel = async (logs: any[], companyName: string) => {
   logs.forEach(log => {
     let rowData: any = {
       id: log.id,
-      timestamp: new Date(log.timestamp).toLocaleString('ro-RO'),
+      timestamp: log.timestamp ? new Date(String(log.timestamp)).toLocaleString('ro-RO') : '-',
       user: log.user?.nume || 'Sistem',
       actiune: log.actiune,
       tabel: log.tabel,
@@ -94,7 +94,7 @@ export const exportAuditToExcel = async (logs: any[], companyName: string) => {
   const url = window.URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
-  const dateStr = new Date().toISOString().split('T')[0];
+  const dateStr = new Date().toLocaleDateString('ro-RO').replace(/\./g, '-');
   anchor.download = `Export_Audit_${companyName.replace(/ /g, '_')}_${dateStr}.xlsx`;
   anchor.click();
   window.URL.revokeObjectURL(url);

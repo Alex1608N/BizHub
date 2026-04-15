@@ -10,7 +10,6 @@ function getGenAI() {
   }
 
   if (!genAI) {
-    console.log("Initializing Gemini with key (prefix):", apiKey.substring(0, 6) + "...");
     genAI = new GoogleGenerativeAI(apiKey);
   }
   return genAI;

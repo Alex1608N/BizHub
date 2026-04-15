@@ -21,12 +21,29 @@ export async function generateProductDescription(name: string, categoryName?: st
 }
 
 
+function sanitizeForAI(data: string): string {
+  return data
+    .replace(/[<>{}[\]'"]/g, '')
+    .replace(/script|eval|fetch|xmlhttp/gi, '')
+    .substring(0, 500);
+}
+
 export async function getInventoryInsights(products: any[], auditLogs: any[]) {
-  // Vom implementa asta la pasul următor pentru reaprovizionare
+  const safeProducts = products.map(p => ({
+    nume: sanitizeForAI(p.nume || ''),
+    stoc: Number(p.stoc) || 0,
+    unitate: sanitizeForAI(p.unitate?.nume || '')
+  })).slice(0, 10);
+  
+  const safeLogs = auditLogs.slice(0, 20).map(l => ({
+    actiune: sanitizeForAI(l.actiune || ''),
+    tabel: sanitizeForAI(l.tabel || '')
+  }));
+  
   const prompt = `Ești un analist de date de inventar expert. Analizează următoarele produse și istoricul lor de audit pentru a oferi sugestii de reaprovizionare.
   
-  Produse actuale: ${JSON.stringify(products.map(p => ({ nume: p.nume, stoc: p.stoc, unitate: p.unitate?.nume })))}
-  Istoric audit (ultimele 20 acțiuni): ${JSON.stringify(auditLogs.slice(0, 20).map(l => ({ actiune: l.actiune, tabel: l.tabel, data: l.timestamp })))}
+  Produse actuale: ${JSON.stringify(safeProducts)}
+  Istoric audit: ${JSON.stringify(safeLogs)}
 
   Oferă 3 sugestii concrete de reaprovizionare sub formă de listă cu puncte în limba română. 
   Dacă totul este în regulă, confirmă acest lucru. 

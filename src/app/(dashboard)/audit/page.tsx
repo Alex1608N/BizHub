@@ -13,7 +13,16 @@ export default async function AuditPage({
   searchParams: Promise<{ companyId?: string }>;
 }) {
   const params = await searchParams;
-  const urlCompanyId = params.companyId ? parseInt(params.companyId) : undefined;
+  const urlCompanyId = params.companyId ? parseInt(params.companyId, 10) : undefined;
+  
+  if (params.companyId && (isNaN(urlCompanyId!) || urlCompanyId! <= 0)) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <p className="text-red-600 font-bold">ID firma invalid.</p>
+      </div>
+    );
+  }
+  
   const session = await getSession();
 
   if (!session || (session.user.rol !== 'ADMIN' && session.user.rol !== 'MANAGER')) {

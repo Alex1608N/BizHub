@@ -78,6 +78,19 @@ export default function ProductForm({ initialData, categories, units, onSuccess,
     e.preventDefault();
     setIsSubmitting(true);
     
+    const pretValue = parseFloat(formData.pret);
+    if (isNaN(pretValue) || pretValue <= 0) {
+      alert("Prețul trebuie să fie mai mare decât 0.");
+      setIsSubmitting(false);
+      return;
+    }
+    
+    if (formData.stoc < 0) {
+      alert("Stocul nu poate fi negativ.");
+      setIsSubmitting(false);
+      return;
+    }
+    
     const { id, ...dataToSend } = {
       ...formData,
       id: initialData?.id,
@@ -184,12 +197,13 @@ export default function ProductForm({ initialData, categories, units, onSuccess,
                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400 group-focus-within:text-emerald-600 transition-colors">
                  <Hash size={18} />
                </div>
-               <input
-                 type="number"
-                 value={formData.stoc}
-                 onChange={(e) => setFormData({ ...formData, stoc: parseInt(e.target.value) || 0 })}
-                 className="block w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-500 focus:bg-white sm:text-sm transition-all font-medium"
-               />
+<input
+                  type="number"
+                  min="0"
+                  value={formData.stoc}
+                  onChange={(e) => setFormData({ ...formData, stoc: Math.max(0, parseInt(e.target.value) || 0) })}
+                  className="block w-full pl-10 pr-3 py-2.5 bg-gray-50 border border-gray-100 rounded-xl text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-emerald-50 focus:border-emerald-500 focus:bg-white sm:text-sm transition-all font-medium"
+                />
              </div>
            </div>
         </div>
