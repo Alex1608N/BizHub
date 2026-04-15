@@ -27,23 +27,9 @@ export async function generateContent(prompt: string) {
     const response = await result.response;
     return response.text();
   } catch (error: any) {
-    console.error("--- GEMINI API ERROR ---");
-    console.error("Message:", error.message);
-    if (error.status) console.error("Status:", error.status);
-    if (error.statusText) console.error("StatusText:", error.statusText);
-
-    // Check if it's a fetch error from Google
-    if (error.response) {
-      try {
-        const details = await error.response.json();
-        console.error("Full Error:", JSON.stringify(details));
-      } catch (e) {
-        console.error("Could not parse error response");
-      }
-    }
-
-    console.error("--- END ERROR ---");
-
+    console.error("=== GEMINI ERROR ===");
+    console.error("Full error object:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    
     throw error;
   }
 }
