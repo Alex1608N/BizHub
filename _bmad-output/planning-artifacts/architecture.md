@@ -34,6 +34,9 @@ Bazat pe cerința de "Local-Only" și "Simplitate Extremă", am regândit stack-
 - **SQLite Engine:** Folosim driverul `better-sqlite3` pentru performanță maximă locală.
 - **Audit Trail Imuabil:** Implementat prin **SQLite Triggers** sau logică strictă în Server Actions care blochează orice `DELETE` sau `UPDATE` pe tabelul `audit_logs`.
 - **Integritate:** Migrările sunt gestionate prin `drizzle-kit` local.
+- **Entități Vânzări:**
+    - `vanzari`: Antetul tranzacției (cine, când, la ce firmă).
+    - `vanzari_detalii`: Liniile de vânzare (ce produs, ce cantitate, ce preț la momentul respectiv).
 
 ### Autentificare & Securitate (Local)
 - **Fără Cloud:** Nu folosim Supabase Auth. Autentificarea se face prin verificarea locală a parolelor hashed în tabelul `users`.

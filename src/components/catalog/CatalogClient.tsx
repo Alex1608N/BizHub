@@ -3,8 +3,9 @@
 import { useState, useRef, useEffect } from 'react';
 import ProductForm from './ProductForm';
 import { deleteProduct, recordStockMovement, importProducts } from '@/app/actions/products';
+import { recordSale } from '@/app/actions/sales';
 import Papa from 'papaparse';
-import { Lock, Package } from 'lucide-react';
+import { Lock, Package, ShoppingCart } from 'lucide-react';
 
 interface CatalogClientProps {
   initialProducts: any[];
@@ -22,6 +23,42 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
   useEffect(() => {
     setProducts(initialProducts);
   }, [initialProducts]);
+
+  const handleSale = async (product: any) => {
+    const qtyStr = prompt(`Cantitate de vândut pentru ${product.nume}:`, "1");
+    if (qtyStr === null) return;
+    
+    const qty = parseInt(qtyStr, 10);
+    if (isNaN(qty) || qty <= 0) {
+      alert("Cantitate invalidă!");
+      return;
+    }
+
+    if (qty > product.stoc) {
+      alert("Stoc insuficient!");
+      return;
+    }
+
+    const currentStoc = product.stoc;
+    const newStoc = currentStoc - qty;
+
+    // Optimistic Update
+    setProducts(prev => prev.map(p => 
+      p.id === product.id ? { ...p, stoc: newStoc } : p
+    ));
+
+    const result = await recordSale([{ productId: product.id, quantity: qty }]);
+    
+    if (!result.success) {
+      // Rollback
+      setProducts(prev => prev.map(p => 
+        p.id === product.id ? { ...p, stoc: currentStoc } : p
+      ));
+      alert(result.error);
+    } else {
+      alert("Vânzare înregistrată cu succes!");
+    }
+  };
 
   const handleImportCSV = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -228,6 +265,13 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => handleSale(product)}
+                          className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-bold bg-emerald-50 text-emerald-600 hover:bg-emerald-100 transition-all active:scale-95"
+                        >
+                          <ShoppingCart size={14} />
+                          Vinde
+                        </button>
                         <button
                           onClick={() => handleEdit(product)}
                           disabled={!product.isEditable}

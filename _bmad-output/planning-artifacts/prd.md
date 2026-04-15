@@ -57,6 +57,8 @@ workflowType: 'prd'
 *   **FR4:** CRUD pe Catalog Produse stocat în SQLite local.
 *   **FR5:** Înregistrarea tranzacțiilor de stoc (Intrări/Ieșiri) în DB locală.
 *   **FR6:** Import CSV local pentru popularea catalogului.
+*   **FR10:** Management Vânzări: Angajații pot înregistra vânzări (scădere de stoc cu reținerea prețului la momentul vânzării).
+*   **FR11:** Statistici Vânzări: Dashboard-ul va afișa un sumar al vânzărilor zilnice (valoare și număr tranzacții).
 
 ### 3. Audit & Transparency (Local Integrity)
 *   **FR7:** Logarea automată a oricărei acțiuni locale în tabelul `audit_log`.

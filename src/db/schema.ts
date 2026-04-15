@@ -170,3 +170,42 @@ export const pontajRelations = relations(pontaj, ({ one }) => ({
     references: [companii.id],
   }),
 }));
+
+export const vanzari = pgTable('vanzari', {
+  id: serial('id').primaryKey(),
+  user_id: uuid('user_id').notNull().references(() => utilizatori.id),
+  companie_id: integer('companie_id').notNull().references(() => companii.id),
+  total: integer('total').notNull().default(0), // Totalul vanzarii in bani
+  created_at: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+});
+
+export const vanzariRelations = relations(vanzari, ({ one, many }) => ({
+  user: one(utilizatori, {
+    fields: [vanzari.user_id],
+    references: [utilizatori.id],
+  }),
+  companie: one(companii, {
+    fields: [vanzari.companie_id],
+    references: [companii.id],
+  }),
+  detalii: many(vanzariDetalii),
+}));
+
+export const vanzariDetalii = pgTable('vanzari_detalii', {
+  id: serial('id').primaryKey(),
+  vanzare_id: integer('vanzare_id').notNull().references(() => vanzari.id),
+  produs_id: integer('produs_id').notNull().references(() => produse.id),
+  cantitate: integer('cantitate').notNull(),
+  pret_unitar: integer('pret_unitar').notNull(), // Pretul la momentul vanzarii
+});
+
+export const vanzariDetaliiRelations = relations(vanzariDetalii, ({ one }) => ({
+  vanzare: one(vanzari, {
+    fields: [vanzariDetalii.vanzare_id],
+    references: [vanzari.id],
+  }),
+  produs: one(produse, {
+    fields: [vanzariDetalii.produs_id],
+    references: [produse.id],
+  }),
+}));
