@@ -14,7 +14,7 @@ export async function recordSale(items: { productId: number; quantity: number }[
   }
 
   try {
-    const result = await db.transaction(async (tx) => {
+    const result = await db.transaction(async (tx: any) => {
       let totalSale = 0;
       const saleItems = [];
 
