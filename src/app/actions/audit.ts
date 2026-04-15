@@ -1,7 +1,7 @@
 'use server';
 
 import { db } from '@/db/index';
-import { auditLogs, pontaj } from '@/db/schema';
+import { auditLogs, pontaj, utilizatori } from '@/db/schema';
 import { desc, and, gte, lte, count, sql, eq } from 'drizzle-orm';
 import { getSession } from '@/lib/auth';
 
