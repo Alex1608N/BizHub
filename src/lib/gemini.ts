@@ -27,8 +27,7 @@ export async function generateContent(prompt: string) {
     const response = await result.response;
     return response.text();
   } catch (error: any) {
-    // Extensive logging for Vercel
-    console.error("--- GEMINI API ERROR START ---");
+    console.error("--- GEMINI API ERROR ---");
     console.error("Message:", error.message);
     if (error.status) console.error("Status:", error.status);
     if (error.statusText) console.error("StatusText:", error.statusText);
@@ -37,14 +36,13 @@ export async function generateContent(prompt: string) {
     if (error.response) {
       try {
         const details = await error.response.json();
-        console.error("Full Error Details:", JSON.stringify(details));
+        console.error("Full Error:", JSON.stringify(details));
       } catch (e) {
-        console.error("Could not parse error response as JSON");
+        console.error("Could not parse error response");
       }
     }
 
-    console.error("Stack:", error.stack);
-    console.error("--- GEMINI API ERROR END ---");
+    console.error("--- END ERROR ---");
 
     throw error;
   }
