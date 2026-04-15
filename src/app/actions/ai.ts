@@ -13,10 +13,12 @@ export async function generateProductDescription(name: string, categoryName?: st
   try {
     const description = await generateContent(prompt);
     return description.trim();
-  } catch (error) {
-    console.error("Error generating AI description:", error);
-    // Return a fallback message instead of throwing to avoid 500 error
-    return "Descrierea nu a putut fi generată momentan (limită API atinsă).";
+  } catch (error: any) {
+    console.error("AI Description Error:", error.message || error);
+    if (error.status === 403 || error.message?.includes('Forbidden')) {
+      return "Descrierea nu a putut fi generată (acces neautorizat). Verifică API key.";
+    }
+    return "Descrierea nu a putut fi generată momentan.";
   }
 }
 
@@ -52,8 +54,8 @@ export async function getInventoryInsights(products: any[], auditLogs: any[]) {
   try {
     const insights = await generateContent(prompt);
     return insights.trim();
-  } catch (error) {
-    console.error("Error generating AI insights:", error);
+  } catch (error: any) {
+    console.error("AI Insights Error:", error.message || error);
     return "Nu am putut genera sugestii în acest moment.";
   }
 }
