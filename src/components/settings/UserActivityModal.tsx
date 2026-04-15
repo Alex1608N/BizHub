@@ -1,18 +1,23 @@
 'use client';
 
 import React, { useEffect, useState } from "react";
-import { X, History, Clock, FileText, ArrowRight } from "lucide-react";
-import { getUserFullActivity } from "@/app/actions/audit";
+import { X, History, Clock, FileText, ArrowRight, BarChart3, TrendingUp } from "lucide-react";
+import { getUserFullActivity, getUserWeeklyActivity } from "@/app/actions/audit";
 
 export default function UserActivityModal({ userId, userName, onClose }: { userId: string, userName: string, onClose: () => void }) {
   const [data, setData] = useState<{ logs: any[], attendance: any[], stats: any } | null>(null);
+  const [weeklyData, setWeeklyData] = useState<{ weekly: any[], today: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'audit' | 'pontaj'>('audit');
 
   useEffect(() => {
     async function fetchData() {
-      const res = await getUserFullActivity(userId);
-      setData(res);
+      const [fullRes, weeklyRes] = await Promise.all([
+        getUserFullActivity(userId),
+        getUserWeeklyActivity(userId)
+      ]);
+      setData(fullRes);
+      setWeeklyData(weeklyRes);
       setLoading(false);
     }
     fetchData();
@@ -20,6 +25,20 @@ export default function UserActivityModal({ userId, userName, onClose }: { userI
 
   const auditStats = data?.stats?.audit || { total: 0, creates: 0, updates: 0, deletes: 0 };
   const calculatePercent = (val: number) => auditStats.total > 0 ? (val / auditStats.total) * 100 : 0;
+
+  // Pregatim datele pentru grafic
+  const last7Days = weeklyData ? Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - (6 - i));
+    const dateStr = d.toISOString().split('T')[0];
+    const log = weeklyData.weekly.find(l => l.day === dateStr);
+    return {
+      label: d.toLocaleDateString('ro-RO', { weekday: 'short' }).charAt(0).toUpperCase(),
+      count: log ? log.count : 0
+    };
+  }) : [];
+
+  const maxCount = weeklyData ? Math.max(...last7Days.map(d => d.count), 5) : 5;
 
   return (
     <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
@@ -57,11 +76,11 @@ export default function UserActivityModal({ userId, userName, onClose }: { userI
           </div>
         )}
 
-        {/* Chart Section */}
+        {/* Chart Section - Visual Distribution */}
         {!loading && auditStats.total > 0 && (
           <div className="px-6 py-4 border-b border-gray-50">
-            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Distribuție Activitate</p>
-            <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden flex">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Distribuție Acțiuni</p>
+            <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden flex mb-4">
               <div 
                 style={{ width: `${calculatePercent(auditStats.creates)}%` }} 
                 className="bg-emerald-500 h-full transition-all duration-500"
@@ -78,19 +97,27 @@ export default function UserActivityModal({ userId, userName, onClose }: { userI
                 title={`Ștergeri: ${auditStats.deletes}`}
               />
             </div>
-            <div className="flex gap-4 mt-2">
-               <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
-                  <span className="text-[10px] font-bold text-gray-500 uppercase">Adăugări</span>
-               </div>
-               <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-amber-500" />
-                  <span className="text-[10px] font-bold text-gray-500 uppercase">Modificări</span>
-               </div>
-               <div className="flex items-center gap-1.5">
-                  <div className="w-2 h-2 rounded-full bg-rose-500" />
-                  <span className="text-[10px] font-bold text-gray-500 uppercase">Ștergeri</span>
-               </div>
+            
+            {/* Weekly Activity Bar Chart */}
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Activitate Săptămânală</p>
+            <div className="flex items-end justify-between gap-1.5 h-20 px-2">
+              {last7Days.map((day, i) => {
+                const height = (day.count / maxCount) * 100;
+                return (
+                  <div key={i} className="flex-1 flex flex-col items-center gap-1 group">
+                    <div className="relative w-full flex flex-col items-center">
+                      <div className="absolute -top-6 bg-gray-800 text-white text-[8px] py-0.5 px-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap z-10 font-bold">
+                        {day.count}
+                      </div>
+                      <div 
+                        className="w-full max-w-[20px] bg-indigo-100 group-hover:bg-indigo-500 rounded-t-md transition-all duration-300"
+                        style={{ height: `${Math.max(height, 5)}%` }}
+                      ></div>
+                    </div>
+                    <span className="text-[9px] font-bold text-gray-400">{day.label}</span>
+                  </div>
+                );
+              })}
             </div>
           </div>
         )}

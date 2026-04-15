@@ -3,6 +3,7 @@ import { getSession } from "@/lib/auth";
 import { StatsCards, StatsCardsSkeleton } from "./components/StatsCards";
 import { LowStockAlerts, LowStockSkeleton } from "./components/LowStockAlerts";
 import { DailyDigest, AuditHistory, AuditSkeleton } from "./components/AuditHistory";
+import { ActivityChart, ActivityChartSkeleton } from "./components/ActivityChart";
 import AIInsights, { AIInsightsSkeleton } from "@/components/dashboard/AIInsights";
 import { cookies } from "next/headers";
 import { COMPANY_COOKIE_NAME } from "@/lib/company";
@@ -92,6 +93,10 @@ export default async function DashboardPage({
         
         <Suspense fallback={<div className="bg-gray-200 rounded-2xl h-full animate-pulse"></div>}>
           <DailyDigest companyId={effectiveCompanyId} />
+        </Suspense>
+
+        <Suspense fallback={<ActivityChartSkeleton />}>
+          <ActivityChart />
         </Suspense>
       </div>
 

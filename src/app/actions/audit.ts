@@ -129,3 +129,61 @@ export async function getAuditLogs(companyId?: number) {
   return logs;
 }
 
+/**
+ * Preluăm activitatea săptămânală a unui utilizator pentru graficul de Dashboard/Profile.
+ * Dacă nu se specifică userId, se preia activitatea utilizatorului logat.
+ */
+export async function getUserWeeklyActivity(targetUserId?: string) {
+  const session = await getSession();
+  if (!session) throw new Error('Neautorizat');
+
+  const userId = targetUserId || session.user.id;
+
+  // Securitate: Dacă cerem datele altcuiva, verificăm permisiunile
+  if (targetUserId && targetUserId !== session.user.id) {
+    if (session.user.rol !== 'ADMIN' && session.user.rol !== 'MANAGER') {
+      throw new Error('Nu aveți permisiunea de a vedea activitatea altor utilizatori.');
+    }
+
+    if (session.user.rol === 'MANAGER') {
+      const [targetUser] = await db.query.utilizatori.findMany({
+        where: eq(utilizatori.id, targetUserId)
+      });
+      if (targetUser?.companie_id !== session.user.companie_id) {
+        throw new Error('Puteți vedea doar activitatea angajaților din firma dumneavoastră.');
+      }
+    }
+  }
+
+  const sevenDaysAgo = new Date();
+  sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  sevenDaysAgo.setHours(0, 0, 0, 0);
+
+  try {
+    const weeklyLogs = await db
+      .select({
+        day: sql`DATE(${auditLogs.timestamp})`,
+        count: count(),
+      })
+      .from(auditLogs)
+      .where(and(eq(auditLogs.user_id, userId), gte(auditLogs.timestamp, sevenDaysAgo)))
+      .groupBy(sql`DATE(${auditLogs.timestamp})`)
+      .orderBy(sql`DATE(${auditLogs.timestamp})`);
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const [todayCount] = await db
+      .select({ count: count() })
+      .from(auditLogs)
+      .where(and(eq(auditLogs.user_id, userId), gte(auditLogs.timestamp, today)));
+
+    return {
+      weekly: weeklyLogs.map(l => ({ day: l.day as string, count: l.count })),
+      today: todayCount?.count || 0,
+    };
+  } catch (error) {
+    console.error('Error fetching weekly activity:', error);
+    return { weekly: [], today: 0 };
+  }
+}
+

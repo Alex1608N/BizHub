@@ -1,8 +1,9 @@
-import React from "react";
 import { getDailyAuditDigest, getAuditLogs } from "@/app/actions/audit";
-import { History, Package, AlertTriangle, User, Clock } from "lucide-react";
+import { getSession } from "@/lib/auth";
+import { History, Package, AlertTriangle, User, Clock, CheckCircle2 } from "lucide-react";
 
 export async function DailyDigest({ companyId }: { companyId?: number }) {
+// ... restul funcției DailyDigest rămâne la fel
   const dailyDigest = await getDailyAuditDigest(companyId);
 
   return (
@@ -43,7 +44,10 @@ export async function DailyDigest({ companyId }: { companyId?: number }) {
 }
 
 export async function AuditHistory({ companyId }: { companyId?: number }) {
-  const recentLogs = await getAuditLogs(companyId);
+  const [recentLogs, session] = await Promise.all([
+    getAuditLogs(companyId),
+    getSession()
+  ]);
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden mt-6">
@@ -54,7 +58,7 @@ export async function AuditHistory({ companyId }: { companyId?: number }) {
           </div>
           <h3 className="text-xl font-bold text-gray-900">Timeline Activitate</h3>
         </div>
-        <p className="text-xs text-gray-400 font-medium uppercase tracking-widest">Ultimele 10 actiuni</p>
+        <p className="text-xs text-gray-400 font-medium uppercase tracking-widest">Ultimele 10 acțiuni în firmă</p>
       </div>
       
       <div className="divide-y divide-gray-50">
@@ -63,31 +67,46 @@ export async function AuditHistory({ companyId }: { companyId?: number }) {
           try {
             const rawData = log.date_noi || log.date_vechi || "{}";
             let data = typeof rawData === 'string' ? JSON.parse(rawData) : rawData;
-            details = data.nume || data.email || "";
+            details = data.nume || data.email || data.nume_produs || "";
           } catch (e) {}
 
+          const isMe = session?.user?.id === log.user_id;
+
           return (
-            <div key={log.id} className="p-6 hover:bg-gray-50 transition-colors flex items-start space-x-4">
-              <div className={`mt-1 p-2 rounded-full flex-shrink-0 ${
-                log.actiune === 'CREATE' ? 'bg-emerald-100 text-emerald-600' :
-                log.actiune === 'UPDATE' ? 'bg-blue-100 text-blue-600' :
+            <div key={log.id} className="p-6 hover:bg-indigo-50/20 transition-all flex items-start space-x-4 group">
+              <div className={`mt-1 p-2 rounded-xl flex-shrink-0 transition-transform group-hover:scale-110 ${
+                log.actiune.includes('CREATE') ? 'bg-emerald-100 text-emerald-600' :
+                log.actiune.includes('UPDATE') ? 'bg-blue-100 text-blue-600' :
                 'bg-red-100 text-red-600'
               }`}>
-                {log.actiune === 'CREATE' ? <Package size={14} /> : 
-                 log.actiune === 'UPDATE' ? <History size={14} /> : 
+                {log.actiune.includes('CREATE') ? <Package size={14} /> : 
+                 log.actiune.includes('UPDATE') ? <History size={14} /> : 
                  <AlertTriangle size={14} />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-bold text-gray-900 truncate">
-                  {log.actiune} - {details}
+                <div className="flex items-center gap-2">
+                  <span className={`text-[10px] font-black px-1.5 py-0.5 rounded-md uppercase tracking-wider ${
+                    isMe ? 'bg-indigo-600 text-white' : 'bg-gray-100 text-gray-400'
+                  }`}>
+                    {isMe ? "EU" : log.user?.nume || "Sistem"}
+                  </span>
+                  <p className="text-sm font-bold text-gray-900 truncate">
+                    {log.actiune.replace(/_/g, ' ')} <span className="text-gray-400 font-normal">în</span> {log.tabel}
+                  </p>
+                </div>
+                <p className="text-xs text-gray-500 mt-1 font-medium italic">
+                  {details ? `"${details}"` : "Detalii indisponibile"}
                 </p>
-                <div className="flex items-center text-[10px] text-gray-400 mt-1 uppercase">
-                   <span>{log.tabel}</span>
-                   <span className="mx-2">•</span>
-                   <Clock size={10} className="mr-1" />
-                   {new Date(log.timestamp).toLocaleTimeString()}
+                <div className="flex items-center text-[10px] text-gray-400 mt-2 uppercase font-bold tracking-tighter">
+                   <Clock size={10} className="mr-1 opacity-50" />
+                   {new Date(log.timestamp).toLocaleString('ro-RO', { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
                 </div>
               </div>
+              {isMe && (
+                <div className="self-center">
+                  <CheckCircle2 size={16} className="text-indigo-200" />
+                </div>
+              )}
             </div>
           );
         })}

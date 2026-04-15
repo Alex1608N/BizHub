@@ -51,12 +51,29 @@ export async function updateUserDetails(userId: string, data: { rol: any, compan
     if (!session || session.user.rol !== 'ADMIN') throw new Error('Doar un Admin poate muta utilizatorii între firme.');
 
     try {
+        const [oldUser] = await db.query.utilizatori.findMany({
+            where: eq(utilizatori.id, userId)
+        });
+
+        if (!oldUser) throw new Error('Utilizatorul nu există.');
+
         await db.update(utilizatori)
             .set({
-                rol: data.rol,
-                companie_id: data.companie_id === undefined ? undefined : data.companie_id
+                rol: data.rol !== undefined ? data.rol : oldUser.rol,
+                companie_id: data.companie_id === undefined ? oldUser.companie_id : data.companie_id
             })
             .where(eq(utilizatori.id, userId));
+
+        // Înregistrăm acțiunea în audit_logs
+        await db.insert(auditLogs).values({
+            user_id: session.user.id,
+            companie_id: data.companie_id || oldUser.companie_id,
+            actiune: 'ACTUALIZARE_PROFIL',
+            tabel: 'utilizatori',
+            date_vechi: JSON.stringify({ rol: oldUser.rol, companie_id: oldUser.companie_id }),
+            date_noi: JSON.stringify({ rol: data.rol, companie_id: data.companie_id }),
+        });
+
         revalidatePath('/utilizatori');
         return { success: true };
     } catch (error: any) {

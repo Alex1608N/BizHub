@@ -13,10 +13,24 @@ export default function UsersClient({ initialUsers, initialCompanies, userRole }
   const [inviteRole, setInviteRole] = useState<'ANGAJAT' | 'MANAGER' | 'CONTABIL'>('ANGAJAT');
   const [selectedUserForActivity, setSelectedUserForActivity] = useState<{id: string, nume: string} | null>(null);
 
-  const handleUpdateUser = async (userId: string, rol: string) => {
-    const result = await updateUserDetails(userId, { rol: rol as any });
+  const handleUpdateUser = async (userId: string, data: { rol?: any, companie_id?: number | null }) => {
+    const user = users.find(u => u.id === userId);
+    if (!user) return;
+
+    const result = await updateUserDetails(userId, { 
+      rol: data.rol !== undefined ? data.rol : user.rol,
+      companie_id: data.companie_id !== undefined ? data.companie_id : user.companie_id
+    });
+
     if (result.success) {
-      setUsers(users.map(u => u.id === userId ? { ...u, rol } : u));
+      setUsers(users.map(u => u.id === userId ? { 
+        ...u, 
+        rol: data.rol !== undefined ? data.rol : u.rol,
+        companie_id: data.companie_id !== undefined ? data.companie_id : u.companie_id,
+        companie: data.companie_id !== undefined 
+          ? initialCompanies.find(c => c.id === data.companie_id) 
+          : u.companie
+      } : u));
     } else {
       alert(result.error);
     }
@@ -130,17 +144,35 @@ export default function UsersClient({ initialUsers, initialCompanies, userRole }
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
-                      <Building2 size={14} className="text-gray-400" />
-                      {user.companie?.nume || <span className="text-gray-300 italic">Nicio firmă</span>}
-                    </div>
+                    {userRole === 'ADMIN' ? (
+                      <div className="flex items-center gap-1.5">
+                        <Building2 size={14} className="text-indigo-400" />
+                        <select 
+                          className="text-xs font-bold border border-gray-200 bg-white rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-600 outline-none cursor-pointer text-indigo-700"
+                          value={user.companie_id || ""}
+                          onChange={(e) => handleUpdateUser(user.id, { companie_id: e.target.value ? parseInt(e.target.value) : null })}
+                        >
+                          <option value="">Nicio firmă</option>
+                          {initialCompanies.map((comp) => (
+                            <option key={comp.id} value={comp.id}>
+                              {comp.nume}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-sm font-semibold text-gray-700">
+                        <Building2 size={14} className="text-gray-400" />
+                        {user.companie?.nume || <span className="text-gray-300 italic">Nicio firmă</span>}
+                      </div>
+                    )}
                   </td>
                   <td className="px-6 py-4">
                     {userRole === 'ADMIN' ? (
                       <select 
                         className="text-xs font-bold border border-gray-200 bg-white rounded-lg px-2 py-1.5 focus:ring-2 focus:ring-indigo-100 focus:border-indigo-600 outline-none cursor-pointer text-indigo-700"
                         value={user.rol}
-                        onChange={(e) => handleUpdateUser(user.id, e.target.value)}
+                        onChange={(e) => handleUpdateUser(user.id, { rol: e.target.value })}
                       >
                         <option value="ANGAJAT">ANGAJAT</option>
                         <option value="MANAGER">MANAGER</option>
