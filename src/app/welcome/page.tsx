@@ -3,6 +3,8 @@ import { getSession } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { LogOut, Rocket, ShieldCheck, Zap, Bell } from "lucide-react";
 import { logout } from "@/app/actions/auth";
+import { getMyInvitations } from "@/app/actions/invitations";
+import InvitationsList from "@/components/welcome/InvitationsList";
 
 export default async function WelcomePage() {
   const session = await getSession();
@@ -15,6 +17,8 @@ export default async function WelcomePage() {
   if (session.user.companie_id || session.user.rol === 'ADMIN') {
     redirect("/dashboard");
   }
+
+  const invitations = await getMyInvitations();
 
   return (
     <div className="min-h-screen bg-white flex flex-col items-center justify-center p-6 text-center">
@@ -60,11 +64,10 @@ export default async function WelcomePage() {
              <Bell className="animate-pulse" />
              <h2 className="text-xl font-bold">Ce urmează?</h2>
           </div>
-          <p className="text-gray-700 font-medium">
-            Contul tău a fost creat cu succes, dar momentan nu ești asociat niciunei firme. 
-            Așteaptă o invitație de la managerul tău sau contactează administratorul sistemului.
-          </p>
-          <div className="flex flex-col md:flex-row gap-4 justify-center pt-4">
+          
+          <InvitationsList initialInvitations={invitations} />
+
+          <div className="flex flex-col md:flex-row gap-4 justify-center pt-4 border-t border-indigo-100">
              <form action={async () => {
                 'use server';
                 await logout();
