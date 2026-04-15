@@ -6,7 +6,7 @@ import { desc, and, gte, lte, count, sql, eq } from 'drizzle-orm';
 import { getSession } from '@/lib/auth';
 
 /**
- * Preluam activitatea completa a unui utilizator (audit + pontaj).
+ * Preluam activitatea completa a unui utilizator (audit + pontaj) si statistici.
  */
 export async function getUserFullActivity(userId: string) {
   const session = await getSession();
@@ -17,16 +17,42 @@ export async function getUserFullActivity(userId: string) {
   const logs = await db.query.auditLogs.findMany({
     where: eq(auditLogs.user_id, userId),
     orderBy: [desc(auditLogs.timestamp)],
-    limit: 20,
+    limit: 30,
   });
 
   const attendance = await db.query.pontaj.findMany({
     where: eq(pontaj.user_id, userId),
     orderBy: [desc(pontaj.timestamp)],
-    limit: 20,
+    limit: 30,
   });
 
-  return { logs, attendance };
+  // Statistici Audit
+  const auditStats = await db
+    .select({
+      total: count(),
+      creates: count(sql`CASE WHEN ${auditLogs.actiune} = 'CREATE' THEN 1 END`),
+      updates: count(sql`CASE WHEN ${auditLogs.actiune} = 'UPDATE' THEN 1 END`),
+      deletes: count(sql`CASE WHEN ${auditLogs.actiune} = 'DELETE' THEN 1 END`),
+    })
+    .from(auditLogs)
+    .where(eq(auditLogs.user_id, userId));
+
+  // Statistici Pontaj (zile lucrate)
+  const attendanceStats = await db
+    .select({
+      totalDays: count(sql`DISTINCT DATE(${pontaj.timestamp})`),
+    })
+    .from(pontaj)
+    .where(and(eq(pontaj.user_id, userId), eq(pontaj.tip, 'START')));
+
+  return { 
+    logs, 
+    attendance, 
+    stats: {
+      audit: auditStats[0] || { total: 0, creates: 0, updates: 0, deletes: 0 },
+      daysWorked: attendanceStats[0]?.totalDays || 0
+    }
+  };
 }
 
 /**

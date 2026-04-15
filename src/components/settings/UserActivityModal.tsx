@@ -5,7 +5,7 @@ import { X, History, Clock, FileText, ArrowRight } from "lucide-react";
 import { getUserFullActivity } from "@/app/actions/audit";
 
 export default function UserActivityModal({ userId, userName, onClose }: { userId: string, userName: string, onClose: () => void }) {
-  const [data, setData] = useState<{ logs: any[], attendance: any[] } | null>(null);
+  const [data, setData] = useState<{ logs: any[], attendance: any[], stats: any } | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'audit' | 'pontaj'>('audit');
 
@@ -18,9 +18,12 @@ export default function UserActivityModal({ userId, userName, onClose }: { userI
     fetchData();
   }, [userId]);
 
+  const auditStats = data?.stats?.audit || { total: 0, creates: 0, updates: 0, deletes: 0 };
+  const calculatePercent = (val: number) => auditStats.total > 0 ? (val / auditStats.total) * 100 : 0;
+
   return (
     <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm z-[60] flex items-center justify-center p-4">
-      <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
+      <div className="bg-white rounded-3xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col shadow-2xl animate-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="p-6 border-b border-gray-100 flex items-center justify-between bg-indigo-50/30">
           <div>
@@ -31,6 +34,66 @@ export default function UserActivityModal({ userId, userName, onClose }: { userI
             <X size={20} />
           </button>
         </div>
+
+        {/* Stats Overview */}
+        {!loading && (
+          <div className="p-6 grid grid-cols-2 md:grid-cols-4 gap-4 bg-gray-50/50 border-b border-gray-50">
+            <div className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Total Acțiuni</p>
+              <p className="text-xl font-black text-indigo-600">{auditStats.total}</p>
+            </div>
+            <div className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Adăugări</p>
+              <p className="text-xl font-black text-emerald-600">{auditStats.creates}</p>
+            </div>
+            <div className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Modificări</p>
+              <p className="text-xl font-black text-amber-600">{auditStats.updates}</p>
+            </div>
+            <div className="bg-white p-3 rounded-2xl border border-gray-100 shadow-sm">
+              <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Zile Lucrate</p>
+              <p className="text-xl font-black text-blue-600">{data?.stats?.daysWorked || 0}</p>
+            </div>
+          </div>
+        )}
+
+        {/* Chart Section */}
+        {!loading && auditStats.total > 0 && (
+          <div className="px-6 py-4 border-b border-gray-50">
+            <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-3">Distribuție Activitate</p>
+            <div className="h-3 w-full bg-gray-100 rounded-full overflow-hidden flex">
+              <div 
+                style={{ width: `${calculatePercent(auditStats.creates)}%` }} 
+                className="bg-emerald-500 h-full transition-all duration-500"
+                title={`Adăugări: ${auditStats.creates}`}
+              />
+              <div 
+                style={{ width: `${calculatePercent(auditStats.updates)}%` }} 
+                className="bg-amber-500 h-full transition-all duration-500"
+                title={`Modificări: ${auditStats.updates}`}
+              />
+              <div 
+                style={{ width: `${calculatePercent(auditStats.deletes)}%` }} 
+                className="bg-rose-500 h-full transition-all duration-500"
+                title={`Ștergeri: ${auditStats.deletes}`}
+              />
+            </div>
+            <div className="flex gap-4 mt-2">
+               <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-emerald-500" />
+                  <span className="text-[10px] font-bold text-gray-500 uppercase">Adăugări</span>
+               </div>
+               <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-amber-500" />
+                  <span className="text-[10px] font-bold text-gray-500 uppercase">Modificări</span>
+               </div>
+               <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full bg-rose-500" />
+                  <span className="text-[10px] font-bold text-gray-500 uppercase">Ștergeri</span>
+               </div>
+            </div>
+          </div>
+        )}
 
         {/* Tabs */}
         <div className="flex px-6 pt-4 gap-4 border-b border-gray-50">
