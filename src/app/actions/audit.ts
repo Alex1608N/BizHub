@@ -178,7 +178,7 @@ export async function getUserWeeklyActivity(targetUserId?: string) {
       .where(and(eq(auditLogs.user_id, userId), gte(auditLogs.timestamp, today)));
 
     return {
-      weekly: weeklyLogs.map(l => ({ day: l.day as string, count: l.count })),
+      weekly: weeklyLogs.map((l: { day: unknown; count: number }) => ({ day: l.day as string, count: l.count })),
       today: todayCount?.count || 0,
     };
   } catch (error) {
