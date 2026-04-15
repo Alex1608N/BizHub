@@ -10,7 +10,7 @@ export async function ActivityChart({ userId }: { userId?: string }) {
     const d = new Date();
     d.setDate(d.getDate() - (6 - i));
     const dateStr = d.toISOString().split('T')[0];
-    const log = weekly.find(l => l.day === dateStr);
+    const log = weekly.find((l: { day: string; count: number }) => l.day === dateStr);
     return {
       label: d.toLocaleDateString('ro-RO', { weekday: 'short' }).charAt(0).toUpperCase(),
       date: dateStr,
