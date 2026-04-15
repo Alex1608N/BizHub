@@ -56,7 +56,7 @@ export async function getUserFullActivity(userId: string) {
 }
 
 /**
- * Calculeaza rezumatul activitatii din ziua precedenta folosind agregari SQL.
+ * Rezumatul activității din ziua precedentă (v1.0.1 - Redeploy).
  */
 export async function getDailyAuditDigest(companyId?: number) {
   const session = await getSession();
