@@ -56,7 +56,7 @@ export default async function DashboardPage({
             Salut, {session?.user?.nume || "Utilizator"}!
           </h2>
           <p className="text-gray-500 mt-1">
-            {effectiveCompanyId ? `Vizualizezi datele firmei ID #${effectiveCompanyId}` : "Iata sumarul operatiunilor tale in BizHub ERP."}
+            {effectiveCompanyId ? `Vizualizezi datele firmei ID #${effectiveCompanyId}` : "Iata sumarul operatiunilor tale in BizHub ERP (Deployed)."}
           </p>
         </div>
         <div className="hidden md:block text-right">
