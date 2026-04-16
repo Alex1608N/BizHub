@@ -36,6 +36,13 @@
       "when": 1776248188923,
       "tag": "0004_flaky_komodo",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1776353150493,
+      "tag": "0005_freezing_doctor_spectrum",
+      "breakpoints": true
     }
   ]
 }

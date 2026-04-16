@@ -162,13 +162,13 @@ export async function getUserWeeklyActivity(targetUserId?: string) {
   try {
     const weeklyLogs = await db
       .select({
-        day: sql`DATE(${auditLogs.timestamp})`,
+        day: sql<string>`TO_CHAR(${auditLogs.timestamp}, 'YYYY-MM-DD')`,
         count: count(),
       })
       .from(auditLogs)
       .where(and(eq(auditLogs.user_id, userId), gte(auditLogs.timestamp, sevenDaysAgo)))
-      .groupBy(sql`DATE(${auditLogs.timestamp})`)
-      .orderBy(sql`DATE(${auditLogs.timestamp})`);
+      .groupBy(sql`TO_CHAR(${auditLogs.timestamp}, 'YYYY-MM-DD')`)
+      .orderBy(sql`TO_CHAR(${auditLogs.timestamp}, 'YYYY-MM-DD')`);
 
     const today = new Date();
     today.setHours(0, 0, 0, 0);
