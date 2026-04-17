@@ -8,20 +8,24 @@ if (!connectionString) {
   throw new Error('DATABASE_URL is missing from .env');
 }
 
-// Prevent multiple connections to the database in development and production
-const globalForDb = global as unknown as { db: any };
+const globalForDb = global as unknown as { 
+  client: postgres.Sql<{}> | undefined;
+  db: ReturnType<typeof drizzle<typeof schema>> | undefined;
+};
 
-let client: any;
-let db: any;
+let client: postgres.Sql<{}>;
+let db: ReturnType<typeof drizzle<typeof schema>>;
 
-if (!globalForDb.db) {
+if (process.env.NODE_ENV === 'production') {
   client = postgres(connectionString, { prepare: false });
   db = drizzle(client, { schema });
-  if (process.env.NODE_ENV !== 'production') {
-    globalForDb.db = db;
-  }
 } else {
-  db = globalForDb.db;
+  if (!globalForDb.db) {
+    globalForDb.client = postgres(connectionString, { prepare: false });
+    globalForDb.db = drizzle(globalForDb.client, { schema });
+  }
+  client = globalForDb.client!;
+  db = globalForDb.db!;
 }
 
 export { db };

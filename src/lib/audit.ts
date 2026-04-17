@@ -24,8 +24,8 @@ export async function auditLog(
       companie_id: data.companie_id,
       actiune: data.actiune,
       tabel: data.tabel,
-      date_vechi: data.date_vechi ? JSON.stringify(data.date_vechi) : null,
-      date_noi: data.date_noi ? JSON.stringify(data.date_noi) : null,
+      date_vechi: data.date_vechi || null,
+      date_noi: data.date_noi || null,
       timestamp: new Date(),
     });
   } catch (error) {

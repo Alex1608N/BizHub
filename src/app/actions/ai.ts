@@ -24,10 +24,12 @@ export async function generateProductDescription(name: string, categoryName?: st
 
 
 function sanitizeForAI(data: string): string {
+  if (!data) return "";
+  // Eliminăm caracterele care ar putea fi folosite pentru prompt injection sau structuri JSON malformați
   return data
-    .replace(/[<>{}[\]'"]/g, '')
-    .replace(/script|eval|fetch|xmlhttp/gi, '')
-    .substring(0, 500);
+    .replace(/[\\<>'"$]/g, '')
+    .substring(0, 300)
+    .trim();
 }
 
 export async function getInventoryInsights(products: any[], auditLogs: any[]) {
