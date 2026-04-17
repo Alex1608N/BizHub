@@ -2,7 +2,7 @@
 
 import { db } from '@/db/index';
 import { produse, categorii, unitati } from '@/db/schema';
-import { eq, and, sql } from 'drizzle-orm';
+import { eq, and, sql, inArray } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { auditLog } from '@/lib/audit';
 import { getSession } from '@/lib/auth';
@@ -34,7 +34,7 @@ export async function addProduct(rawDate: any) {
       stoc: validatedData.stoc,
       categorie_id: validatedData.categorie_id,
       unitate_id: validatedData.unitate_id,
-      companie_id: session.user.companie_id // Sursă sigură (sesiunea)
+      companie_id: session.user.companie_id
     }).returning();
 
     await auditLog(db, {
@@ -145,7 +145,6 @@ export async function getProducts(companyId?: number) {
   const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
   
   if (targetId) {
-    // @ts-ignore
     query = query.where(eq(produse.companie_id, targetId));
   }
 
@@ -171,4 +170,46 @@ export async function deleteProduct(id: number) {
         return { success: false, error: 'A apărut o eroare la ștergere.' };
     }
 }
-`nexport async function importProducts(data: any[]) {`n    const session = await getSession();`n    if (!session || !session.user.companie_id) return { success: false, error: 'Neautorizat', count: 0 };`n`n    try {`n        const validatedItems = data.map(item => {`n            const result = productSchema.safeParse({`n                nume: item.nume,`n                descriere: item.descriere,`n                pret: Number(item.pret) || 0,`n                stoc: Number(item.stoc) || 0,`n                categorie_id: item.categorie_id ? Number(item.categorie_id) : undefined,`n                unitate_id: item.unitate_id ? Number(item.unitate_id) : undefined,`n            });`n            if (!result.success) return null;`n            return {`n                ...result.data,`n                companie_id: session.user.companie_id as number`n            };`n        }).filter(Boolean) as any[];`n`n        if (validatedItems.length === 0) return { success: false, error: 'Nu am g�sit date valide pentru import.', count: 0 };`n`n        await db.transaction(async (tx) => {`n            await tx.insert(produse).values(validatedItems);`n            `n            await auditLog(tx, {`n                user_id: session.user.id,`n                companie_id: session.user.companie_id as number,`n                actiune: 'IMPORT',`n                tabel: 'produse',`n                date_noi: { count: validatedItems.length },`n            });`n        });`n`n        revalidatePath('/catalog');`n        return { success: true, count: validatedItems.length };`n    } catch (error: any) {`n        console.error('Import error:', error);`n        return { success: false, error: 'A ap�rut o eroare la importul datelor.', count: 0 };`n    }`n}
+
+export async function importProducts(data: any[]) {
+    const session = await getSession();
+    if (!session || !session.user.companie_id) return { success: false, error: 'Neautorizat', count: 0 };
+
+    try {
+        const validatedItems = data.map(item => {
+            const result = productSchema.safeParse({
+                nume: item.nume,
+                descriere: item.descriere,
+                pret: Number(item.pret) || 0,
+                stoc: Number(item.stoc) || 0,
+                categorie_id: item.categorie_id ? Number(item.categorie_id) : undefined,
+                unitate_id: item.unitate_id ? Number(item.unitate_id) : undefined,
+            });
+            if (!result.success) return null;
+            return {
+                ...result.data,
+                companie_id: session.user.companie_id as number
+            };
+        }).filter(Boolean) as any[];
+
+        if (validatedItems.length === 0) return { success: false, error: 'Nu am găsit date valide pentru import.', count: 0 };
+
+        await db.transaction(async (tx) => {
+            await tx.insert(produse).values(validatedItems);
+            
+            await auditLog(tx, {
+                user_id: session.user.id,
+                companie_id: session.user.companie_id as number,
+                actiune: 'IMPORT',
+                tabel: 'produse',
+                date_noi: { count: validatedItems.length },
+            });
+        });
+
+        revalidatePath('/catalog');
+        return { success: true, count: validatedItems.length };
+    } catch (error: any) {
+        console.error('Import error:', error);
+        return { success: false, error: 'A apărut o eroare la importul datelor.', count: 0 };
+    }
+}
