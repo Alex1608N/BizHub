@@ -145,6 +145,7 @@ export async function getProducts(companyId?: number) {
   const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
   
   if (targetId) {
+    // @ts-ignore
     query = query.where(eq(produse.companie_id, targetId));
   }
 
@@ -212,4 +213,33 @@ export async function importProducts(data: any[]) {
         console.error('Import error:', error);
         return { success: false, error: 'A apărut o eroare la importul datelor.', count: 0 };
     }
+}
+
+export async function getLowStockProducts(limit = 10, companyId?: number) {
+  const session = await getSession();
+  if (!session) return [];
+
+  const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
+
+  try {
+    let query = db.select({
+      id: produse.id,
+      nume: produse.nume,
+      stoc: produse.stoc,
+      unitate: { simbol: unitati.simbol }
+    })
+    .from(produse)
+    .leftJoin(unitati, eq(produse.unitate_id, unitati.id));
+
+    if (targetId) {
+        query = query.where(and(sql`${produse.stoc} < 5`, eq(produse.companie_id, targetId)));
+    } else {
+        query = query.where(sql`${produse.stoc} < 5`);
+    }
+
+    return await query.limit(limit);
+  } catch (error) {
+    console.error('Get low stock products error:', error);
+    return [];
+  }
 }
