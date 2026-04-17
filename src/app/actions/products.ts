@@ -2,7 +2,7 @@
 
 import { db } from '@/db/index';
 import { produse, categorii, unitati } from '@/db/schema';
-import { eq, and, sql, inArray } from 'drizzle-orm';
+import { eq, and, sql } from 'drizzle-orm';
 import { revalidatePath } from 'next/cache';
 import { auditLog } from '@/lib/audit';
 import { getSession } from '@/lib/auth';
@@ -25,14 +25,13 @@ export async function getDashboardStats(companyId?: number) {
   const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
 
   try {
-    const filters = targetId ? eq(produse.companie_id, targetId) : undefined;
-
-    const [stats] = await db.select({
+    const query = db.select({
       totalValue: sql<number>`SUM(${produse.stoc} * ${produse.pret}) / 100`,
       totalProducts: sql<number>`COUNT(${produse.id})`,
       lowStockCount: sql<number>`COUNT(CASE WHEN ${produse.stoc} < 5 THEN 1 END)`
-    }).from(produse)
-      .where(filters);
+    }).from(produse);
+
+    const [stats] = await (targetId ? query.where(eq(produse.companie_id, targetId)) : query);
 
     return {
       totalValue: Number(stats?.totalValue || 0),
@@ -49,7 +48,7 @@ export async function getProducts(companyId?: number) {
   const session = await getSession();
   if (!session) return [];
 
-  let query = db.select({
+  const baseQuery = db.select({
     id: produse.id,
     nume: produse.nume,
     descriere: produse.descriere,
@@ -68,12 +67,7 @@ export async function getProducts(companyId?: number) {
 
   const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
   
-  if (targetId) {
-    // @ts-ignore
-    query = query.where(eq(produse.companie_id, targetId));
-  }
-
-  const results = await query;
+  const results = await (targetId ? baseQuery.where(eq(produse.companie_id, targetId)) : baseQuery);
   const canEdit = session.user.rol === 'ADMIN' || session.user.rol === 'MANAGER';
 
   return results.map(p => ({ ...p, isEditable: canEdit }));
@@ -124,7 +118,7 @@ export async function addProduct(rawDate: any) {
   } catch (error: any) {
     console.error('Add product error:', error);
     if (error instanceof z.ZodError) {
-      return { success: false, error: error.errors[0].message };
+      return { success: false, error: error.issues[0].message };
     }
     return { success: false, error: 'A apărut o eroare la crearea produsului.' };
   }
@@ -175,6 +169,9 @@ export async function updateProduct(id: number, rawData: any) {
         return { success: true };
     } catch (error: any) {
         console.error('Update product error:', error);
+        if (error instanceof z.ZodError) {
+            return { success: false, error: error.issues[0].message };
+        }
         return { success: false, error: 'A apărut o eroare la actualizare.' };
     }
 }
@@ -279,7 +276,7 @@ export async function getLowStockProducts(limit = 10, companyId?: number) {
   const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
 
   try {
-    let query = db.select({
+    const query = db.select({
       id: produse.id,
       nume: produse.nume,
       stoc: produse.stoc,
@@ -288,13 +285,11 @@ export async function getLowStockProducts(limit = 10, companyId?: number) {
     .from(produse)
     .leftJoin(unitati, eq(produse.unitate_id, unitati.id));
 
-    if (targetId) {
-        query = query.where(and(sql`${produse.stoc} < 5`, eq(produse.companie_id, targetId)));
-    } else {
-        query = query.where(sql`${produse.stoc} < 5`);
-    }
+    const finalQuery = targetId 
+        ? query.where(and(sql`${produse.stoc} < 5`, eq(produse.companie_id, targetId)))
+        : query.where(sql`${produse.stoc} < 5`);
 
-    return await query.limit(limit);
+    return await finalQuery.limit(limit);
   } catch (error) {
     console.error('Get low stock products error:', error);
     return [];

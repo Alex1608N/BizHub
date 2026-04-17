@@ -23,7 +23,7 @@ export async function recordSale(items: { productId: number; quantity: number }[
         const [product] = await tx
           .select()
           .from(produse)
-          .where(and(eq(produse.id, item.productId), eq(produse.companie_id, session.user.companie_id)));
+          .where(and(eq(produse.id, item.productId), eq(produse.companie_id, session.user.companie_id as number)));
 
         if (!product || product.stoc < item.quantity) {
           throw new Error(`Stoc insuficient pentru produsul: ${product?.nume || 'Necunoscut'}`);

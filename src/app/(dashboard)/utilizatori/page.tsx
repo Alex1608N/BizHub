@@ -7,7 +7,7 @@ export default async function UsersPage() {
   const session = await getSession();
   const users = await getUsers();
   
-  let companies = [];
+  let companies: any[] = [];
   if (session?.user?.rol === 'ADMIN') {
       companies = await getCompanies();
   }

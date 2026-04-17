@@ -20,13 +20,13 @@ interface AuditLog {
   user: { nume: string } | null;
   actiune: string;
   tabel: string;
-  date_vechi: string | null;
-  date_noi: string | null;
+  date_vechi: any;
+  date_noi: any;
   timestamp: any;
 }
 
 export default function AuditTimeline({ logs, company }: { logs: AuditLog[], company: any }) {
-  
+
   const [isExporting, setIsExporting] = useState(false);
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -55,20 +55,19 @@ export default function AuditTimeline({ logs, company }: { logs: AuditLog[], com
 
   const handleDownloadPDF = (log: AuditLog) => {
     if (!log.date_noi || !log.date_vechi) return;
-    
+
     try {
-      const oldData = JSON.parse(log.date_vechi);
-      const newData = JSON.parse(log.date_noi);
-      
+      const oldData = log.date_vechi;
+      const newData = log.date_noi;
+
       const stocVechi = oldData.stoc || 0;
       const stocNou = newData.stoc || 0;
       const diferenta = stocNou - stocVechi;
-      
+
       const produsId = newData.id || oldData.id;
       const numeProdus = newData.nume || oldData.nume || `Produs #${produsId}`;
       const unitate = newData.unitate || oldData.unitate || 'Buc';
       const pret = newData.pret || oldData.pret || 0;
-
       generateStockPDF(company || { nume: 'BizHub ERP' }, {
         id: log.id,
         data: new Date(log.timestamp),
@@ -104,17 +103,14 @@ export default function AuditTimeline({ logs, company }: { logs: AuditLog[], com
     }
   };
 
-  const formatChanges = (oldDataStr: string | null, newDataStr: string | null) => {
+  const formatChanges = (oldData: any, newData: any) => {
     try {
-      const oldData = oldDataStr ? JSON.parse(oldDataStr) : null;
-      const newData = newDataStr ? JSON.parse(newDataStr) : null;
-
       if (!oldData && newData) {
-        return <div className="text-sm text-gray-600">Creat cu datele: <span className="font-mono bg-gray-100 p-0.5 rounded text-xs">{newDataStr}</span></div>;
+        return <div className="text-sm text-gray-600">Creat cu datele: <span className="font-mono bg-gray-100 p-0.5 rounded text-xs">{JSON.stringify(newData)}</span></div>;
       }
 
       if (oldData && !newData) {
-        return <div className="text-sm text-gray-600">Șters datele: <span className="font-mono bg-gray-100 p-0.5 rounded text-xs">{oldDataStr}</span></div>;
+        return <div className="text-sm text-gray-600">Șters datele: <span className="font-mono bg-gray-100 p-0.5 rounded text-xs">{JSON.stringify(oldData)}</span></div>;
       }
 
       if (oldData && newData) {
@@ -134,7 +130,7 @@ export default function AuditTimeline({ logs, company }: { logs: AuditLog[], com
         return changes.length > 0 ? changes : <span className="text-xs text-gray-400 italic">Nicio schimbare detectată în câmpuri</span>;
       }
     } catch (e) {
-      return <span className="text-xs text-red-400 italic font-mono">Eroare parsing date: {oldDataStr || newDataStr}</span>;
+      return <span className="text-xs text-red-400 italic font-mono">Eroare afișare date</span>;
     }
     return null;
   };
@@ -200,11 +196,8 @@ export default function AuditTimeline({ logs, company }: { logs: AuditLog[], com
         {/* Lista Loguri */}
         <div className="divide-y divide-gray-100 max-h-[600px] overflow-y-auto">
           {filteredLogs.map((log) => {
-            let itemName = "";
-            try {
-              const data = JSON.parse(log.date_noi || log.date_vechi || "{}");
-              itemName = data.nume || data.email || "";
-            } catch (e) {}
+            const data = log.date_noi || log.date_vechi || {};
+            const itemName = data.nume || data.email || "";
 
             return (
               <div key={log.id} className="p-5 hover:bg-gray-50/50 transition-colors group border-b border-gray-50 last:border-0">

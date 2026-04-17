@@ -49,7 +49,7 @@ export async function updateUserDetails(userId: string, data: { rol: any, compan
     if (!session || session.user.rol !== 'ADMIN') throw new Error('Doar un Admin poate muta utilizatorii între firme.');
 
     try {
-        const [oldUser] = await db.query.utilizatori.findFirst({
+        const oldUser = await db.query.utilizatori.findFirst({
             where: eq(utilizatori.id, userId)
         });
 

@@ -47,8 +47,8 @@ export const exportAuditToExcel = async (logs: any[], companyName: string) => {
     };
 
     try {
-      const oldData = log.date_vechi ? JSON.parse(log.date_vechi) : null;
-      const newData = log.date_noi ? JSON.parse(log.date_noi) : null;
+      const oldData = log.date_vechi || null;
+      const newData = log.date_noi || null;
 
       if (log.tabel === 'stoc' && oldData && newData) {
         const diff = (newData.stoc || 0) - (oldData.stoc || 0);

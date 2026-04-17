@@ -54,7 +54,7 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
       setProducts(prev => prev.map(p => 
         p.id === product.id ? { ...p, stoc: currentStoc } : p
       ));
-      alert(result.error);
+      alert((result as any).error);
     } else {
       alert("Vânzare înregistrată cu succes!");
     }
@@ -72,7 +72,7 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
         if (result.success) {
           alert(`Import reușit: ${result.count} produse adăugate.`);
         } else {
-          alert(result.error);
+          alert((result as any).error);
         }
         if (fileInputRef.current) fileInputRef.current.value = '';
       },
@@ -100,7 +100,7 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
       setProducts(prev => prev.map(p => 
         p.id === product.id ? { ...p, stoc: currentStoc } : p
       ));
-      alert(result.error);
+      alert((result as any).error);
     }
   };
 
@@ -113,7 +113,7 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
       const result = await deleteProduct(id);
       if (!result.success) {
         setProducts(originalProducts);
-        alert(result.error);
+        alert((result as any).error);
       }
     }
   };
