@@ -11,9 +11,10 @@ interface CatalogClientProps {
   initialProducts: any[];
   categories: any[];
   units: any[];
+  companyId?: number;
 }
 
-export default function CatalogClient({ initialProducts, categories, units }: CatalogClientProps) {
+export default function CatalogClient({ initialProducts, categories, units, companyId }: CatalogClientProps) {
   const [products, setProducts] = useState(initialProducts);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
@@ -175,6 +176,7 @@ export default function CatalogClient({ initialProducts, categories, units }: Ca
             initialData={editingProduct}
             categories={categories}
             units={units}
+            companyId={companyId}
             onSuccess={() => {
               setIsFormOpen(false);
               setEditingProduct(null);

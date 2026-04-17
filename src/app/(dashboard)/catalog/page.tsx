@@ -1,6 +1,8 @@
 import { getProducts, getCategories } from '@/app/actions/products';
 import { getUnits } from '@/app/actions/units';
 import CatalogClient from '@/components/catalog/CatalogClient';
+import { cookies } from "next/headers";
+import { COMPANY_COOKIE_NAME } from "@/lib/company";
 
 export default async function CatalogPage({
   searchParams,
@@ -8,9 +10,9 @@ export default async function CatalogPage({
   searchParams: Promise<{ companyId?: string }>;
 }) {
   const params = await searchParams;
-  const companyId = params.companyId ? parseInt(params.companyId, 10) : undefined;
+  const companyIdFromUrl = params.companyId ? parseInt(params.companyId, 10) : undefined;
   
-  if (params.companyId && (isNaN(companyId!) || companyId! <= 0)) {
+  if (params.companyId && (isNaN(companyIdFromUrl!) || companyIdFromUrl! <= 0)) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
         <p className="text-red-600 font-bold">ID firma invalid.</p>
@@ -18,10 +20,16 @@ export default async function CatalogPage({
     );
   }
 
+  const cookieStore = await cookies();
+  const selectedCompanyCookie = cookieStore.get(COMPANY_COOKIE_NAME);
+  const companyIdFromCookie = selectedCompanyCookie ? parseInt(selectedCompanyCookie.value) : undefined;
+
+  const effectiveCompanyId = companyIdFromUrl || companyIdFromCookie;
+
   const [products, categories, units] = await Promise.all([
-    getProducts(companyId),
-    getCategories(companyId),
-    getUnits(companyId)
+    getProducts(effectiveCompanyId),
+    getCategories(effectiveCompanyId),
+    getUnits(effectiveCompanyId)
   ]);
 
   return (
@@ -29,6 +37,7 @@ export default async function CatalogPage({
       initialProducts={products} 
       categories={categories} 
       units={units} 
+      companyId={effectiveCompanyId}
     />
   );
 }

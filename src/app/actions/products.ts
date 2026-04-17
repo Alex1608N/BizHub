@@ -248,15 +248,13 @@ export async function deleteProduct(id: number) {
     }
 }
 
-export async function importProducts(data: any[]) {
+export async function importProducts(data: any[], companyId?: number) {
     const session = await getSession();
     if (!session) return { success: false, error: 'Neautorizat', count: 0 };
 
-    // Pentru import, Admin-ul trebuie sa fi selectat o firma in UI care sa trimita ID-ul
-    // Deocamdata folosim companie_id din sesiune pt siguranta, sau primul item daca e Admin (simplificat)
-    let targetCompanyId = session.user.companie_id;
+    // Admin-ul poate specifica firma, altfel folosim firma din sesiune
+    let targetCompanyId = session.user.rol === 'ADMIN' ? companyId : session.user.companie_id;
     
-    // TODO: Suport Admin import in firma terta
     if (!targetCompanyId) return { success: false, error: 'Selectează o firmă înainte de import.', count: 0 };
 
     try {

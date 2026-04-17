@@ -21,11 +21,12 @@ interface ProductFormProps {
   initialData?: any;
   categories: any[];
   units: any[];
+  companyId?: number;
   onSuccess: () => void;
   onCancel: () => void;
 }
 
-export default function ProductForm({ initialData, categories, units, onSuccess, onCancel }: ProductFormProps) {
+export default function ProductForm({ initialData, categories, units, companyId, onSuccess, onCancel }: ProductFormProps) {
   const [formData, setFormData] = useState({
     nume: initialData?.nume || '',
     descriere: initialData?.descriere || '',
@@ -63,14 +64,17 @@ export default function ProductForm({ initialData, categories, units, onSuccess,
   const handleCreateCategory = async () => {
     if (!newCategoryName.trim()) return;
 
-    const result = await createCategory({ nume: newCategoryName });
+    const result = await createCategory({ 
+        nume: newCategoryName,
+        companie_id: companyId 
+    });
     if (result.success && result.category) {
       setLocalCategories([...localCategories, result.category]);
       setFormData({ ...formData, categorie_id: result.category.id.toString() });
       setIsAddingCategory(false);
       setNewCategoryName('');
     } else {
-      alert(result.error);
+      alert((result as any).error);
     }
   };
 
@@ -97,6 +101,7 @@ export default function ProductForm({ initialData, categories, units, onSuccess,
       pret: Math.round(parseFloat(formData.pret) * 100),
       categorie_id: formData.categorie_id ? parseInt(formData.categorie_id.toString()) : undefined,
       unitate_id: formData.unitate_id ? parseInt(formData.unitate_id.toString()) : undefined,
+      companie_id: companyId // Includem ID-ul firmei selectate
     };
 
     let result;
@@ -109,7 +114,7 @@ export default function ProductForm({ initialData, categories, units, onSuccess,
     if (result.success) {
       onSuccess();
     } else {
-      alert(result.error);
+      alert((result as any).error);
       setIsSubmitting(false);
     }
   };
