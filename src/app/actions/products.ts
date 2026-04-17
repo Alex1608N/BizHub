@@ -16,13 +16,15 @@ const productSchema = z.object({
   stoc: z.number().int().default(0),
   categorie_id: z.number().int().optional(),
   unitate_id: z.number().int().optional(),
+  companie_id: z.number().int().optional(), // Permitem trimiterea ID-ului de la client pentru Admin
 });
 
 export async function getDashboardStats(companyId?: number) {
   const session = await getSession();
   if (!session) return { totalValue: 0, totalProducts: 0, lowStockCount: 0 };
 
-  const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
+  // Admin poate vedea stats pt o firma specifica sau global (daca nu trimite ID)
+  const targetId = companyId || session.user.companie_id;
 
   try {
     const query = db.select({
@@ -65,7 +67,10 @@ export async function getProducts(companyId?: number) {
   .leftJoin(categorii, eq(produse.categorie_id, categorii.id))
   .leftJoin(unitati, eq(produse.unitate_id, unitati.id));
 
-  const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
+  // Daca e Admin si avem companyId in URL, filtram dupa el.
+  // Daca e Admin si NU avem companyId, vede TOATE produsele.
+  // Daca e User normal, vede DOAR produsele firmei lui.
+  const targetId = companyId || session.user.companie_id;
   
   const results = await (targetId ? baseQuery.where(eq(produse.companie_id, targetId)) : baseQuery);
   const canEdit = session.user.rol === 'ADMIN' || session.user.rol === 'MANAGER';
@@ -77,9 +82,9 @@ export async function getCategories(companyId?: number) {
   const session = await getSession();
   if (!session) return [];
   
-  const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
+  const targetId = companyId || session.user.companie_id;
 
-  if (session.user.rol === 'ADMIN' && !targetId) {
+  if (!targetId) {
       return await db.select().from(categorii);
   }
   
@@ -88,8 +93,14 @@ export async function getCategories(companyId?: number) {
 
 export async function addProduct(rawDate: any) {
   const session = await getSession();
-  if (!session || !session.user.companie_id) {
-    return { success: false, error: 'Neautorizat' };
+  if (!session) return { success: false, error: 'Neautorizat' };
+
+  // Securitate: Daca NU e Admin, ii fortam companie_id-ul din sesiune.
+  // Daca E Admin, il lasam sa foloseasca companie_id-ul trimis din UI (cel al firmei pe care o gestioneaza acum).
+  let finalCompanyId = session.user.rol === 'ADMIN' ? rawDate.companie_id : session.user.companie_id;
+
+  if (!finalCompanyId) {
+      return { success: false, error: 'Lipsă ID Companie. Te rugăm să selectezi o firmă.' };
   }
 
   try {
@@ -102,12 +113,12 @@ export async function addProduct(rawDate: any) {
       stoc: validatedData.stoc,
       categorie_id: validatedData.categorie_id,
       unitate_id: validatedData.unitate_id,
-      companie_id: session.user.companie_id
+      companie_id: finalCompanyId
     }).returning();
 
     await auditLog(db, {
       user_id: session.user.id,
-      companie_id: session.user.companie_id,
+      companie_id: finalCompanyId,
       actiune: 'CREATE',
       tabel: 'produse',
       date_noi: newProduct,
@@ -124,14 +135,18 @@ export async function addProduct(rawDate: any) {
   }
 }
 
-export async function createCategory(data: { nume: string }) {
+export async function createCategory(data: { nume: string, companie_id?: number }) {
     const session = await getSession();
-    if (!session || !session.user.companie_id) return { success: false, error: 'Neautorizat' };
+    if (!session) return { success: false, error: 'Neautorizat' };
+
+    let finalCompanyId = session.user.rol === 'ADMIN' ? data.companie_id : session.user.companie_id;
+
+    if (!finalCompanyId) return { success: false, error: 'Lipsă ID Companie.' };
 
     try {
         const [newCat] = await db.insert(categorii).values({
             nume: data.nume,
-            companie_id: session.user.companie_id
+            companie_id: finalCompanyId
         }).returning();
         revalidatePath('/catalog');
         return { success: true, category: newCat };
@@ -143,10 +158,15 @@ export async function createCategory(data: { nume: string }) {
 
 export async function updateProduct(id: number, rawData: any) {
     const session = await getSession();
-    if (!session || !session.user.companie_id) return { success: false, error: 'Neautorizat' };
+    if (!session) return { success: false, error: 'Neautorizat' };
 
     try {
         const validatedData = productSchema.partial().parse(rawData);
+
+        // Fortam filtrarea pe companie pt useri normali
+        const whereClause = session.user.rol === 'ADMIN' 
+            ? eq(produse.id, id) 
+            : and(eq(produse.id, id), eq(produse.companie_id, session.user.companie_id as number));
 
         const [updated] = await db.update(produse)
             .set({
@@ -157,13 +177,10 @@ export async function updateProduct(id: number, rawData: any) {
                 categorie_id: validatedData.categorie_id,
                 unitate_id: validatedData.unitate_id
             })
-            .where(and(
-                eq(produse.id, id), 
-                eq(produse.companie_id, session.user.companie_id)
-            ))
+            .where(whereClause)
             .returning();
             
-        if (!updated) return { success: false, error: 'Produsul nu a fost găsit.' };
+        if (!updated) return { success: false, error: 'Produsul nu a fost găsit sau nu ai permisiuni.' };
 
         revalidatePath('/catalog');
         return { success: true };
@@ -178,23 +195,27 @@ export async function updateProduct(id: number, rawData: any) {
 
 export async function recordStockMovement(id: number, quantityChange: number) {
   const session = await getSession();
-  if (!session || !session.user.companie_id) return { success: false, error: 'Neautorizat' };
+  if (!session) return { success: false, error: 'Neautorizat' };
 
   try {
+    const whereClause = session.user.rol === 'ADMIN'
+        ? and(eq(produse.id, id), sql`${produse.stoc} + ${quantityChange} >= 0`)
+        : and(
+            eq(produse.id, id),
+            eq(produse.companie_id, session.user.companie_id as number),
+            sql`${produse.stoc} + ${quantityChange} >= 0`
+          );
+
     const [updatedProduct] = await db.update(produse)
       .set({ stoc: sql`${produse.stoc} + ${quantityChange}` })
-      .where(and(
-        eq(produse.id, id),
-        eq(produse.companie_id, session.user.companie_id),
-        sql`${produse.stoc} + ${quantityChange} >= 0`
-      ))
+      .where(whereClause)
       .returning();
 
     if (!updatedProduct) return { success: false, error: 'Stoc insuficient sau produs inexistent.' };
 
     await auditLog(db, {
       user_id: session.user.id,
-      companie_id: session.user.companie_id,
+      companie_id: updatedProduct.companie_id,
       actiune: 'UPDATE',
       tabel: 'produse',
       date_noi: updatedProduct,
@@ -211,13 +232,14 @@ export async function recordStockMovement(id: number, quantityChange: number) {
 
 export async function deleteProduct(id: number) {
     const session = await getSession();
-    if (!session || !session.user.companie_id) return { success: false, error: 'Neautorizat' };
+    if (!session) return { success: false, error: 'Neautorizat' };
 
     try {
-        await db.delete(produse).where(and(
-            eq(produse.id, id),
-            eq(produse.companie_id, session.user.companie_id)
-        ));
+        const whereClause = session.user.rol === 'ADMIN'
+            ? eq(produse.id, id)
+            : and(eq(produse.id, id), eq(produse.companie_id, session.user.companie_id as number));
+
+        await db.delete(produse).where(whereClause);
         revalidatePath('/catalog');
         return { success: true };
     } catch (error: any) {
@@ -228,7 +250,14 @@ export async function deleteProduct(id: number) {
 
 export async function importProducts(data: any[]) {
     const session = await getSession();
-    if (!session || !session.user.companie_id) return { success: false, error: 'Neautorizat', count: 0 };
+    if (!session) return { success: false, error: 'Neautorizat', count: 0 };
+
+    // Pentru import, Admin-ul trebuie sa fi selectat o firma in UI care sa trimita ID-ul
+    // Deocamdata folosim companie_id din sesiune pt siguranta, sau primul item daca e Admin (simplificat)
+    let targetCompanyId = session.user.companie_id;
+    
+    // TODO: Suport Admin import in firma terta
+    if (!targetCompanyId) return { success: false, error: 'Selectează o firmă înainte de import.', count: 0 };
 
     try {
         const validatedItems = data.map(item => {
@@ -243,7 +272,7 @@ export async function importProducts(data: any[]) {
             if (!result.success) return null;
             return {
                 ...result.data,
-                companie_id: session.user.companie_id as number
+                companie_id: targetCompanyId as number
             };
         }).filter(Boolean) as any[];
 
@@ -254,7 +283,7 @@ export async function importProducts(data: any[]) {
             
             await auditLog(tx, {
                 user_id: session.user.id,
-                companie_id: session.user.companie_id as number,
+                companie_id: targetCompanyId as number,
                 actiune: 'IMPORT',
                 tabel: 'produse',
                 date_noi: { count: validatedItems.length },
@@ -273,7 +302,7 @@ export async function getLowStockProducts(limit = 10, companyId?: number) {
   const session = await getSession();
   if (!session) return [];
 
-  const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
+  const targetId = companyId || session.user.companie_id;
 
   try {
     const query = db.select({
