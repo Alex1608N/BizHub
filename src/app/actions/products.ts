@@ -18,6 +18,80 @@ const productSchema = z.object({
   unitate_id: z.number().int().optional(),
 });
 
+export async function getDashboardStats(companyId?: number) {
+  const session = await getSession();
+  if (!session) return { totalValue: 0, totalProducts: 0, lowStockCount: 0 };
+
+  const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
+
+  try {
+    const filters = targetId ? eq(produse.companie_id, targetId) : undefined;
+
+    const [stats] = await db.select({
+      totalValue: sql<number>`SUM(${produse.stoc} * ${produse.pret}) / 100`,
+      totalProducts: sql<number>`COUNT(${produse.id})`,
+      lowStockCount: sql<number>`COUNT(CASE WHEN ${produse.stoc} < 5 THEN 1 END)`
+    }).from(produse)
+      .where(filters);
+
+    return {
+      totalValue: Number(stats?.totalValue || 0),
+      totalProducts: Number(stats?.totalProducts || 0),
+      lowStockCount: Number(stats?.lowStockCount || 0)
+    };
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error);
+    return { totalValue: 0, totalProducts: 0, lowStockCount: 0 };
+  }
+}
+
+export async function getProducts(companyId?: number) {
+  const session = await getSession();
+  if (!session) return [];
+
+  let query = db.select({
+    id: produse.id,
+    nume: produse.nume,
+    descriere: produse.descriere,
+    pret: produse.pret,
+    stoc: produse.stoc,
+    categorie_id: produse.categorie_id,
+    unitate_id: produse.unitate_id,
+    companie_id: produse.companie_id,
+    created_at: produse.created_at,
+    categorie: { id: categorii.id, nume: categorii.nume },
+    unitate: { id: unitati.id, simbol: unitati.simbol }
+  })
+  .from(produse)
+  .leftJoin(categorii, eq(produse.categorie_id, categorii.id))
+  .leftJoin(unitati, eq(produse.unitate_id, unitati.id));
+
+  const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
+  
+  if (targetId) {
+    // @ts-ignore
+    query = query.where(eq(produse.companie_id, targetId));
+  }
+
+  const results = await query;
+  const canEdit = session.user.rol === 'ADMIN' || session.user.rol === 'MANAGER';
+
+  return results.map(p => ({ ...p, isEditable: canEdit }));
+}
+
+export async function getCategories(companyId?: number) {
+  const session = await getSession();
+  if (!session) return [];
+  
+  const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
+
+  if (session.user.rol === 'ADMIN' && !targetId) {
+      return await db.select().from(categorii);
+  }
+  
+  return await db.select().from(categorii).where(eq(categorii.companie_id, targetId as number));
+}
+
 export async function addProduct(rawDate: any) {
   const session = await getSession();
   if (!session || !session.user.companie_id) {
@@ -54,6 +128,23 @@ export async function addProduct(rawDate: any) {
     }
     return { success: false, error: 'A apărut o eroare la crearea produsului.' };
   }
+}
+
+export async function createCategory(data: { nume: string }) {
+    const session = await getSession();
+    if (!session || !session.user.companie_id) return { success: false, error: 'Neautorizat' };
+
+    try {
+        const [newCat] = await db.insert(categorii).values({
+            nume: data.nume,
+            companie_id: session.user.companie_id
+        }).returning();
+        revalidatePath('/catalog');
+        return { success: true, category: newCat };
+    } catch (error: any) {
+        console.error('Create category error:', error);
+        return { success: false, error: 'A apărut o eroare la crearea categoriei.' };
+    }
 }
 
 export async function updateProduct(id: number, rawData: any) {
@@ -119,40 +210,6 @@ export async function recordStockMovement(id: number, quantityChange: number) {
     console.error('Stock movement error:', error);
     return { success: false, error: 'A apărut o eroare la modificarea stocului.' };
   }
-}
-
-export async function getProducts(companyId?: number) {
-  const session = await getSession();
-  if (!session) return [];
-
-  let query = db.select({
-    id: produse.id,
-    nume: produse.nume,
-    descriere: produse.descriere,
-    pret: produse.pret,
-    stoc: produse.stoc,
-    categorie_id: produse.categorie_id,
-    unitate_id: produse.unitate_id,
-    companie_id: produse.companie_id,
-    created_at: produse.created_at,
-    categorie: { id: categorii.id, nume: categorii.nume },
-    unitate: { id: unitati.id, simbol: unitati.simbol }
-  })
-  .from(produse)
-  .leftJoin(categorii, eq(produse.categorie_id, categorii.id))
-  .leftJoin(unitati, eq(produse.unitate_id, unitati.id));
-
-  const targetId = (session.user.rol === 'ADMIN' && companyId) ? companyId : session.user.companie_id;
-  
-  if (targetId) {
-    // @ts-ignore
-    query = query.where(eq(produse.companie_id, targetId));
-  }
-
-  const results = await query;
-  const canEdit = session.user.rol === 'ADMIN' || session.user.rol === 'MANAGER';
-
-  return results.map(p => ({ ...p, isEditable: canEdit }));
 }
 
 export async function deleteProduct(id: number) {
