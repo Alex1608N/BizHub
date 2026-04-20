@@ -7,10 +7,19 @@ import { revalidatePath } from 'next/cache';
 import { getSession } from '@/lib/auth';
 import { auditLog } from '@/lib/audit';
 
-export async function recordSale(items: { productId: number; quantity: number }[]) {
+export async function recordSale(items: { productId: number; quantity: number }[], overrideCompanyId?: number) {
   const session = await getSession();
-  if (!session || !session.user.companie_id) {
+  if (!session) {
     return { success: false, error: 'Neautorizat sau sesiune expirată.' };
+  }
+
+  // Daca e ADMIN, poate folosi un companyId trimis din UI, altfel folosim compania din profil
+  const targetCompanyId = (session.user.rol === 'ADMIN' && overrideCompanyId) 
+    ? overrideCompanyId 
+    : session.user.companie_id;
+
+  if (!targetCompanyId) {
+    return { success: false, error: 'Compania nu a fost identificată.' };
   }
 
   try {
@@ -23,7 +32,7 @@ export async function recordSale(items: { productId: number; quantity: number }[
         const [product] = await tx
           .select()
           .from(produse)
-          .where(and(eq(produse.id, item.productId), eq(produse.companie_id, session.user.companie_id as number)));
+          .where(and(eq(produse.id, item.productId), eq(produse.companie_id, targetCompanyId as number)));
 
         if (!product) {
           throw new Error(`Produsul cu ID-ul ${item.productId} nu a fost găsit sau nu aparține companiei tale.`);

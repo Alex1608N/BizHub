@@ -48,7 +48,7 @@ export default function CatalogClient({ initialProducts, categories, units, comp
       p.id === product.id ? { ...p, stoc: newStoc } : p
     ));
 
-    const result = await recordSale([{ productId: product.id, quantity: qty }]);
+    const result = await recordSale([{ productId: product.id, quantity: qty }], companyId);
     
     if (!result.success) {
       // Rollback
