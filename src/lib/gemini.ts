@@ -22,13 +22,10 @@ export async function generateContent(prompt: string) {
       throw new Error("Gemini API key is not configured.");
     }
 
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
-    console.log("Generând conținut cu Gemini (1.5 Pro)...");
+    const model = ai.getGenerativeModel({ model: "gemini-2.5-flash" });
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const text = response.text();
-    console.log("Conținut generat cu succes!");
-    return text;
+    return response.text();
   } catch (error: any) {
     console.error("=== GEMINI ERROR ===");
     console.error("Full error object:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
@@ -36,4 +33,3 @@ export async function generateContent(prompt: string) {
     throw error;
   }
 }
-
