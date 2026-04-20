@@ -25,8 +25,12 @@ export async function recordSale(items: { productId: number; quantity: number }[
           .from(produse)
           .where(and(eq(produse.id, item.productId), eq(produse.companie_id, session.user.companie_id as number)));
 
-        if (!product || product.stoc < item.quantity) {
-          throw new Error(`Stoc insuficient pentru produsul: ${product?.nume || 'Necunoscut'}`);
+        if (!product) {
+          throw new Error(`Produsul cu ID-ul ${item.productId} nu a fost găsit sau nu aparține companiei tale.`);
+        }
+
+        if (product.stoc < item.quantity) {
+          throw new Error(`Stoc insuficient pentru produsul: ${product.nume} (Disponibil: ${product.stoc}, Cerut: ${item.quantity})`);
         }
 
         const lineTotal = product.pret * item.quantity;
