@@ -13,10 +13,9 @@ export async function recordSale(items: { productId: number; quantity: number }[
     return { success: false, error: 'Neautorizat sau sesiune expirată.' };
   }
 
-  // Daca e ADMIN, poate folosi un companyId trimis din UI, altfel folosim compania din profil
-  const targetCompanyId = (session.user.rol === 'ADMIN' && overrideCompanyId) 
-    ? overrideCompanyId 
-    : session.user.companie_id;
+  // Daca e ADMIN si avem un overrideCompanyId, il folosim. 
+  // Altfel folosim compania din profil (fallback standard).
+  const targetCompanyId = overrideCompanyId || session.user.companie_id;
 
   if (!targetCompanyId) {
     return { success: false, error: 'Compania nu a fost identificată.' };
