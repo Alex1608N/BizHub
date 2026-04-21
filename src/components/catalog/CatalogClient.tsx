@@ -5,7 +5,7 @@ import ProductForm from './ProductForm';
 import { deleteProduct, recordStockMovement, importProducts } from '@/app/actions/products';
 import { recordSale } from '@/app/actions/sales';
 import Papa from 'papaparse';
-import { Lock, Package, ShoppingCart } from 'lucide-react';
+import { Lock, Package, ShoppingCart, Search } from 'lucide-react';
 
 interface CatalogClientProps {
   initialProducts: any[];
@@ -16,6 +16,7 @@ interface CatalogClientProps {
 
 export default function CatalogClient({ initialProducts, categories, units, companyId }: CatalogClientProps) {
   const [products, setProducts] = useState(initialProducts);
+  const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -24,6 +25,10 @@ export default function CatalogClient({ initialProducts, categories, units, comp
   useEffect(() => {
     setProducts(initialProducts);
   }, [initialProducts]);
+
+  const filteredProducts = products.filter(product => 
+    product.nume.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   const handleSale = async (product: any) => {
     const qtyStr = prompt(`Cantitate de vândut pentru ${product.nume}:`, "1");
@@ -163,6 +168,19 @@ export default function CatalogClient({ initialProducts, categories, units, comp
         </div>
       </div>
 
+      <div className="mb-6 relative group max-w-md">
+        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+          <Search size={18} className="text-gray-400 group-focus-within:text-indigo-600 transition-colors" />
+        </div>
+        <input
+          type="text"
+          placeholder="Caută un produs după nume..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="block w-full pl-11 pr-4 py-3 bg-white border border-gray-200 rounded-2xl leading-5 placeholder-gray-400 focus:outline-none focus:ring-4 focus:ring-indigo-50 focus:border-indigo-600 sm:text-sm transition-all shadow-sm"
+        />
+      </div>
+
       {isFormOpen && (
         <div className="mb-8 p-4 md:p-6 bg-white rounded-2xl border border-indigo-100 shadow-xl shadow-indigo-50/50 relative overflow-hidden">
           <div className="absolute top-0 left-0 w-1 h-full bg-indigo-600"></div>
@@ -203,14 +221,14 @@ export default function CatalogClient({ initialProducts, categories, units, comp
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
-              {products.length === 0 ? (
+              {filteredProducts.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-6 py-16 text-center text-gray-400 italic">
-                    Nu există produse în catalog.
+                    {searchTerm ? `Nu am găsit produse pentru "${searchTerm}"` : 'Nu există produse în catalog.'}
                   </td>
                 </tr>
               ) : (
-                products.map((product) => (
+                filteredProducts.map((product) => (
                   <tr key={product.id} className={`hover:bg-indigo-50/30 transition-colors group ${!product.isEditable ? 'bg-gray-50/50' : ''}`}>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">

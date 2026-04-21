@@ -33,31 +33,41 @@ function sanitizeForAI(data: string): string {
 }
 
 export async function getInventoryInsights(products: any[], auditLogs: any[]) {
-  const safeProducts = products.map(p => ({
+  // Sortăm produsele după stoc (cele mai mici primele) pentru a oferi context relevant AI-ului
+  const lowStockContext = [...products]
+    .sort((a, b) => (Number(a.stoc) || 0) - (Number(b.stoc) || 0))
+    .slice(0, 10);
+
+  const safeProducts = lowStockContext.map(p => ({
     nume: sanitizeForAI(p.nume || ''),
     stoc: Number(p.stoc) || 0,
-    unitate: sanitizeForAI(p.unitate?.nume || '')
-  })).slice(0, 10);
+    unitate: sanitizeForAI(p.unitate?.simbol || '') // Corectat: simbol în loc de nume
+  }));
   
-  const safeLogs = auditLogs.slice(0, 20).map(l => ({
+  const safeLogs = auditLogs.slice(0, 15).map(l => ({
     actiune: sanitizeForAI(l.actiune || ''),
     tabel: sanitizeForAI(l.tabel || '')
   }));
   
-  const prompt = `Ești un analist de date de inventar expert. Analizează următoarele produse și istoricul lor de audit pentru a oferi sugestii de reaprovizionare.
+  const prompt = `Ești un analist de date de inventar expert. Analizează următoarele produse (prioritizate după stoc mic) și istoricul lor de audit pentru a oferi sugestii de reaprovizionare.
   
   Produse actuale: ${JSON.stringify(safeProducts)}
   Istoric audit: ${JSON.stringify(safeLogs)}
 
   Oferă 3 sugestii concrete de reaprovizionare sub formă de listă cu puncte în limba română. 
-  Dacă totul este în regulă, confirmă acest lucru. 
-  Răspunsul să fie scurt și la obiect.`;
+  Dacă totul este în regulă și stocurile sunt suficiente, confirmă acest lucru. 
+  Răspunsul să fie scurt, profesional și direct. Trimite DOAR textul sugestiilor.`;
+
+  console.log("=== SENDING TO GEMINI ===");
+  console.log("Prompt context size:", prompt.length);
 
   try {
     const insights = await generateContent(prompt);
+    console.log("=== GEMINI RESPONSE SUCCESS ===");
     return insights.trim();
   } catch (error: any) {
+    console.error("=== GEMINI RESPONSE ERROR ===");
     console.error("AI Insights Error:", error.message || error);
-    return "Nu am putut genera sugestii în acest moment.";
+    return "Nu am putut genera sugestii în acest moment. Verifică configurația API.";
   }
 }
