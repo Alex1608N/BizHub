@@ -67,14 +67,23 @@ export async function getProducts(companyId?: number) {
   .leftJoin(categorii, eq(produse.categorie_id, categorii.id))
   .leftJoin(unitati, eq(produse.unitate_id, unitati.id));
 
-  // Daca e Admin si avem companyId in URL, filtram dupa el.
-  // Daca e Admin si NU avem companyId, vede TOATE produsele.
-  // Daca e User normal, vede DOAR produsele firmei lui.
-  const targetId = companyId || session.user.companie_id;
+  // LOGICA MULTI-TENANCY REFINATA:
+  // 1. Daca e Admin si avem companyId (URL/Cookie), filtram dupa el.
+  // 2. Daca e Admin si NU avem companyId, facem fallback la firma din profilul lui (sa nu vada "tot" deodata).
+  // 3. Daca NU e Admin, vede DOAR firma lui.
   
+  let targetId: number | undefined;
+  
+  if (session.user.rol === 'ADMIN') {
+    targetId = companyId || (session.user.companie_id as number);
+  } else {
+    targetId = session.user.companie_id as number;
+  }
+  
+  // Daca tot nu avem un targetId (caz rar), adminul vede tot, altfel filtram strict.
   const results = await (targetId ? baseQuery.where(eq(produse.companie_id, targetId)) : baseQuery);
+  
   const canEdit = session.user.rol === 'ADMIN' || session.user.rol === 'MANAGER';
-
   return results.map(p => ({ ...p, isEditable: canEdit }));
 }
 
@@ -82,13 +91,19 @@ export async function getCategories(companyId?: number) {
   const session = await getSession();
   if (!session) return [];
   
-  const targetId = companyId || session.user.companie_id;
+  let targetId: number | undefined;
+  
+  if (session.user.rol === 'ADMIN') {
+    targetId = companyId || (session.user.companie_id as number);
+  } else {
+    targetId = session.user.companie_id as number;
+  }
 
   if (!targetId) {
       return await db.select().from(categorii);
   }
   
-  return await db.select().from(categorii).where(eq(categorii.companie_id, targetId as number));
+  return await db.select().from(categorii).where(eq(categorii.companie_id, targetId));
 }
 
 export async function addProduct(rawDate: any) {

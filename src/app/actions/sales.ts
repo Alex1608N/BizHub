@@ -7,18 +7,34 @@ import { revalidatePath } from 'next/cache';
 import { getSession } from '@/lib/auth';
 import { auditLog } from '@/lib/audit';
 
+import { cookies } from 'next/headers';
+import { COMPANY_COOKIE_NAME } from '@/lib/company';
+
 export async function recordSale(items: { productId: number; quantity: number }[], overrideCompanyId?: number) {
   const session = await getSession();
   if (!session) {
     return { success: false, error: 'Neautorizat sau sesiune expirată.' };
   }
 
-  // Daca e ADMIN si avem un overrideCompanyId, il folosim. 
-  // Altfel folosim compania din profil (fallback standard).
-  const targetCompanyId = overrideCompanyId || session.user.companie_id;
+  // LOGICA CONTEXT FIRMA:
+  // 1. Daca avem un ID trimis explicit din UI (overrideCompanyId).
+  // 2. Daca suntem Admin, cautam in Cookie-ul de firma activa.
+  // 3. Fallback la firma din profilul userului (pt non-admin sau daca cookie lipseste).
+  
+  let targetCompanyId: number | undefined = overrideCompanyId;
+
+  if (!targetCompanyId && session.user.rol === 'ADMIN') {
+    const cookieStore = await cookies();
+    const cookieVal = cookieStore.get(COMPANY_COOKIE_NAME)?.value;
+    if (cookieVal) targetCompanyId = parseInt(cookieVal, 10);
+  }
 
   if (!targetCompanyId) {
-    return { success: false, error: 'Compania nu a fost identificată.' };
+    targetCompanyId = session.user.companie_id as number;
+  }
+
+  if (!targetCompanyId) {
+    return { success: false, error: 'Compania nu a fost identificată. Te rugăm să selectezi o firmă.' };
   }
 
   try {
@@ -26,15 +42,15 @@ export async function recordSale(items: { productId: number; quantity: number }[
       let totalSale = 0;
       const saleItems = [];
 
-      // 1. Validam stocul si calculam totalul
       for (const item of items) {
+        // VALIDARE STRICTA: Produsul trebuie sa fie in baza de date SI sa apartina firmei targetCompanyId
         const [product] = await tx
           .select()
           .from(produse)
           .where(and(eq(produse.id, item.productId), eq(produse.companie_id, targetCompanyId as number)));
 
         if (!product) {
-          throw new Error(`Produsul cu ID-ul ${item.productId} nu a fost găsit sau nu aparține companiei tale.`);
+          throw new Error(`Produsul cu ID-ul ${item.productId} nu a fost găsit în catalogul firmei selectate (Firma ID: ${targetCompanyId}).`);
         }
 
         if (product.stoc < item.quantity) {
@@ -49,24 +65,21 @@ export async function recordSale(items: { productId: number; quantity: number }[
           priceAtSale: product.pret,
         });
 
-        // 2. Scadem stocul
         await tx
           .update(produse)
           .set({ stoc: sql`${produse.stoc} - ${item.quantity}` })
           .where(eq(produse.id, item.productId));
       }
 
-      // 3. Cream antetul vanzarii
       const [newSale] = await tx
         .insert(vanzari)
         .values({
           user_id: session.user.id,
-          companie_id: session.user.companie_id,
+          companie_id: targetCompanyId,
           total: totalSale,
         })
         .returning();
 
-      // 4. Cream detaliile vanzarii
       for (const saleItem of saleItems) {
         await tx.insert(vanzariDetalii).values({
           vanzare_id: newSale.id,
@@ -76,10 +89,9 @@ export async function recordSale(items: { productId: number; quantity: number }[
         });
       }
 
-      // 5. Audit Log
       await auditLog(tx, {
         user_id: session.user.id,
-        companie_id: session.user.companie_id,
+        companie_id: targetCompanyId as number,
         actiune: 'CREATE',
         tabel: 'vanzari',
         date_noi: { sale: newSale, items: saleItems },
@@ -93,7 +105,7 @@ export async function recordSale(items: { productId: number; quantity: number }[
     return result;
   } catch (error: any) {
     console.error('Sale error:', error);
-    return { success: false, error: error.message };
+    return { success: false, error: error.message || 'Eroare la înregistrarea vânzării.' };
   }
 }
 
