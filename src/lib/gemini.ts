@@ -22,7 +22,10 @@ export async function generateContent(prompt: string) {
       throw new Error("Gemini API key is not configured.");
     }
 
-    const model = ai.getGenerativeModel({ model: "gemini-1.5-flash" });
+    // Forțăm versiunea v1 a API-ului pentru stabilitate în 2026
+    const model = ai.getGenerativeModel({
+      model: "gemini-3.1-flash-lite-preview"
+    }, { apiVersion: 'v1beta' });
     const result = await model.generateContent(prompt);
     const response = await result.response;
     return response.text();
