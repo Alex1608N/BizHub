@@ -1,5 +1,5 @@
 import React from "react";
-import { Sparkles, ArrowRight, AlertCircle } from "lucide-react";
+import { Sparkles, AlertCircle } from "lucide-react";
 import { getLowStockProducts, getProducts } from "@/app/actions/products";
 import { getAuditLogs } from "@/app/actions/audit";
 import { getInventoryInsights } from "@/app/actions/ai";
@@ -81,11 +81,8 @@ export default async function AIInsights({ companyId }: { companyId?: number }) 
         )}
       </div>
 
-      <div className="bg-gray-50/50 p-4 border-t border-gray-50 flex items-center justify-between">
+      <div className="bg-gray-50/50 p-4 border-t border-gray-50 flex items-center">
         <span className="text-[10px] text-gray-400 font-medium italic">Bazat pe istoricul ultimelor 100 de tranzacții</span>
-        <button className="text-[10px] font-bold text-indigo-600 uppercase tracking-widest flex items-center hover:translate-x-1 transition-transform">
-          Detalii Raport <ArrowRight size={12} className="ml-1" />
-        </button>
       </div>
     </div>
   );

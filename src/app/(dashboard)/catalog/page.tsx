@@ -3,6 +3,7 @@ import { getUnits } from '@/app/actions/units';
 import CatalogClient from '@/components/catalog/CatalogClient';
 import { cookies } from "next/headers";
 import { COMPANY_COOKIE_NAME } from "@/lib/company";
+import { getSession } from '@/lib/auth';
 
 export default async function CatalogPage({
   searchParams,
@@ -20,6 +21,7 @@ export default async function CatalogPage({
     );
   }
 
+  const session = await getSession();
   const cookieStore = await cookies();
   const selectedCompanyCookie = cookieStore.get(COMPANY_COOKIE_NAME);
   const companyIdFromCookie = selectedCompanyCookie ? parseInt(selectedCompanyCookie.value) : undefined;
@@ -38,6 +40,7 @@ export default async function CatalogPage({
       categories={categories} 
       units={units} 
       companyId={effectiveCompanyId}
+      userRole={session?.user?.rol}
     />
   );
 }

@@ -12,9 +12,10 @@ interface CatalogClientProps {
   categories: any[];
   units: any[];
   companyId?: number;
+  userRole?: string;
 }
 
-export default function CatalogClient({ initialProducts, categories, units, companyId }: CatalogClientProps) {
+export default function CatalogClient({ initialProducts, categories, units, companyId, userRole }: CatalogClientProps) {
   const [products, setProducts] = useState(initialProducts);
   const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -303,17 +304,19 @@ export default function CatalogClient({ initialProducts, categories, units, comp
                         >
                           Editează
                         </button>
-                        <button
-                          onClick={() => handleDelete(product.id)}
-                          disabled={!product.isEditable}
-                          className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
-                            !product.isEditable 
-                              ? 'text-gray-300 cursor-not-allowed' 
-                              : 'text-red-600 hover:bg-red-50 active:scale-95'
-                          }`}
-                        >
-                          Șterge
-                        </button>
+                        {userRole !== 'ANGAJAT' && (
+                          <button
+                            onClick={() => handleDelete(product.id)}
+                            disabled={!product.isEditable}
+                            className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
+                              !product.isEditable 
+                                ? 'text-gray-300 cursor-not-allowed' 
+                                : 'text-red-600 hover:bg-red-50 active:scale-95'
+                            }`}
+                          >
+                            Șterge
+                          </button>
+                        )}
                       </div>
                     </td>
                   </tr>

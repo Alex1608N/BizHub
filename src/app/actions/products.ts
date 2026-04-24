@@ -83,7 +83,7 @@ export async function getProducts(companyId?: number) {
   // Daca tot nu avem un targetId (caz rar), adminul vede tot, altfel filtram strict.
   const results = await (targetId ? baseQuery.where(eq(produse.companie_id, targetId)) : baseQuery);
   
-  const canEdit = session.user.rol === 'ADMIN' || session.user.rol === 'MANAGER';
+  const canEdit = session.user.rol === 'ADMIN' || session.user.rol === 'MANAGER' || session.user.rol === 'ANGAJAT';
   return results.map(p => ({ ...p, isEditable: canEdit }));
 }
 

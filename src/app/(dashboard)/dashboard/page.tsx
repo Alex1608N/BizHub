@@ -101,9 +101,11 @@ export default async function DashboardPage({
       </div>
 
       {/* Activity Feed - Streamed */}
-      <Suspense fallback={<AuditSkeleton />}>
-        <AuditHistory companyId={effectiveCompanyId} />
-      </Suspense>
+      {session?.user?.rol !== 'ANGAJAT' && (
+        <Suspense fallback={<AuditSkeleton />}>
+          <AuditHistory companyId={effectiveCompanyId} />
+        </Suspense>
+      )}
     </div>
   );
 }

@@ -1,13 +1,9 @@
-# Playwright
-playwright-report/
-test-results/
-results.xml
-
 node_modules/
+.env.example
+.env.backup
 .env
 .env.local
 .env*.local
-.env.backup
 .next/
 dist/
 __pycache__/
@@ -22,5 +18,6 @@ practica.db
 .clinerules/
 .gemini/
 _bmad/
+.opencode
 
 # drizzle/ (eliminat pentru a permite sincronizarea migrărilor)
