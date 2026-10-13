@@ -135,6 +135,28 @@ export default function CatalogClient({ initialProducts, categories, units, comp
     setIsFormOpen(true);
   };
 
+  const getStockBadge = (stock: number) => {
+    if (stock === 0) {
+      return (
+        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-red-100 text-red-700 inline-block">
+          Epuizat
+        </span>
+      );
+    } else if (stock < 5) {
+      return (
+        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-amber-100 text-amber-700 inline-block">
+          Stoc Redus
+        </span>
+      );
+    } else {
+      return (
+        <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-emerald-100 text-emerald-700 inline-block">
+          In Stoc
+        </span>
+      );
+    }
+  };
+
   return (
     <div className="p-4 md:p-6 lg:p-8">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
@@ -250,32 +272,35 @@ export default function CatalogClient({ initialProducts, categories, units, comp
                       </span>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center gap-3">
-                        <button
-                          onClick={() => handleStockChange(product, -1)}
-                          disabled={!product.isEditable}
-                          className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all border ${
-                            !product.isEditable 
-                              ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed' 
-                              : 'bg-white text-gray-600 border-gray-200 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 shadow-sm active:scale-95'
-                          }`}
-                        >
-                          -
-                        </button>
-                        <span className={`font-black text-center text-lg min-w-[2.5rem] ${product.stoc < 5 ? 'text-red-600' : 'text-gray-900'}`}>
-                          {product.stoc}
-                        </span>
-                        <button
-                          onClick={() => handleStockChange(product, 1)}
-                          disabled={!product.isEditable}
-                          className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all border ${
-                            !product.isEditable 
-                              ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed' 
-                              : 'bg-white text-gray-600 border-gray-200 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 shadow-sm active:scale-95'
-                          }`}
-                        >
-                          +
-                        </button>
+                      <div className="flex flex-col gap-1.5 items-start">
+                        <div className="flex items-center gap-3">
+                          <button
+                            onClick={() => handleStockChange(product, -1)}
+                            disabled={!product.isEditable}
+                            className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all border ${
+                              !product.isEditable 
+                                ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed' 
+                                : 'bg-white text-gray-600 border-gray-200 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 shadow-sm active:scale-95'
+                            }`}
+                          >
+                            -
+                          </button>
+                          <span className={`font-black text-center text-lg min-w-[2.5rem] ${product.stoc < 5 ? 'text-red-600' : 'text-gray-900'}`}>
+                            {product.stoc}
+                          </span>
+                          <button
+                            onClick={() => handleStockChange(product, 1)}
+                            disabled={!product.isEditable}
+                            className={`w-8 h-8 flex items-center justify-center rounded-lg transition-all border ${
+                              !product.isEditable 
+                                ? 'bg-gray-50 text-gray-300 border-gray-100 cursor-not-allowed' 
+                                : 'bg-white text-gray-600 border-gray-200 hover:bg-indigo-600 hover:text-white hover:border-indigo-600 shadow-sm active:scale-95'
+                            }`}
+                          >
+                            +
+                          </button>
+                        </div>
+                        {getStockBadge(product.stoc)}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap font-bold text-gray-900">

@@ -21,3 +21,14 @@ _bmad/
 .opencode
 
 # drizzle/ (eliminat pentru a permite sincronizarea migrărilor)
+
+# Test reports & logs
+playwright-report/
+test-results/
+results.xml
+*.html
+
+# Ghiduri locale & fisiere de invatare
+LEARNING*
+docs/GHID*
+docs/LEARNING*
